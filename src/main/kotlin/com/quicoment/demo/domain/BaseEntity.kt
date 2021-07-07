@@ -1,17 +1,11 @@
 package com.quicoment.demo.domain
 
-import lombok.Getter
-import lombok.Setter
-import javax.persistence.MappedSuperclass
-import java.time.LocalDateTime
-
-import org.hibernate.annotations.UpdateTimestamp
-
 import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.UpdateTimestamp
+import java.time.LocalDateTime
 import javax.persistence.Column
+import javax.persistence.MappedSuperclass
 
-@Getter
-@Setter
 @MappedSuperclass
 open class BaseEntity {
     @CreationTimestamp
