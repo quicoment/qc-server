@@ -8,6 +8,14 @@ plugins {
     kotlin("plugin.jpa") version "1.5.20"
 }
 
+allOpen {
+    annotation("javax.persistence.Entity")
+}
+
+noArg {
+    annotation("javax.persistence.Entity")
+}
+
 group = "com.quicoment"
 version = "0.0.1-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_11
