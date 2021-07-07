@@ -1,0 +1,6 @@
+server:
+  shutdown: graceful
+spring:
+  config:
+    activate:
+      on-profile: local
