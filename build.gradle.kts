@@ -42,9 +42,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
     }
-    compileOnly("org.projectlombok:lombok")
     runtimeOnly("mysql:mysql-connector-java")
-    annotationProcessor("org.projectlombok:lombok")
 }
 
 tasks.withType<KotlinCompile> {
