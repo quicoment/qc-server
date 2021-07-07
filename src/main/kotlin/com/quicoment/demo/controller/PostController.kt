@@ -23,6 +23,9 @@ class PostController(@Autowired val postService: PostService) {
         post.content ?: return ResponseEntity.badRequest().body(errorResponse)
         post.password ?: return ResponseEntity.badRequest().body(errorResponse)
 
-        return ResponseEntity.created(URI.create("/posts/${postService.savePost(Post(post.title, post.content, post.password)).id}")).build()
+        val id = postService.savePost(Post(post.title, post.content, post.password)).id
+                ?: return ResponseEntity.internalServerError().body(ResultOf.Error(ErrorCase.CONNECTION_FAIL.name, ErrorCase.CONNECTION_FAIL.getMessage()))
+
+        return ResponseEntity.created(URI.create("/posts/${id}")).build()
     }
 }
