@@ -25,4 +25,10 @@ class Post(title: String, content: String, password: String) : BaseEntity() {
     override fun hashCode(): Int {
         return id?.hashCode() ?: 0
     }
+
+    fun update(newTitle: String, newContent: String, newPassword: String) {
+        this.title = newTitle
+        this.content = newContent
+        this.password = newPassword
+    }
 }
