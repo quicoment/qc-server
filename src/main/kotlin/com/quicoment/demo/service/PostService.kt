@@ -4,7 +4,6 @@ import com.quicoment.demo.domain.Post
 import com.quicoment.demo.repository.PostRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.util.*
 
 @Service
 class PostService(@Autowired private val postRepository: PostRepository) {
