@@ -4,13 +4,10 @@ import javax.persistence.*
 
 @Entity
 @Table(name = "posts")
-class Post(title: String, content: String, password: String) : BaseEntity() {
+class Post(var title: String, var content: String, var password: String) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private var id: Long? = null
-    private var title: String = title
-    private var content: String = content
-    private var password: String = password
+    val id: Long? = null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
