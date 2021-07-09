@@ -58,4 +58,13 @@ class PostController(@Autowired val postService: PostService) {
 
         return ResponseEntity.created(URI.create("/posts/${id}")).build()
     }
+
+    @DeleteMapping("/posts/{id}")
+    fun deletePost(@PathVariable("id") id: Long?): ResponseEntity<ResultOf<*>> {
+        id
+            ?: return ResponseEntity.badRequest().body(ResultOf.Error(ErrorCase.INVALID_FIELD.getCode(), ErrorCase.INVALID_FIELD.getMessage()))
+
+        postService.deletePost(id)
+        return ResponseEntity.ok(ResultOf.Success(postService.findPost()))
+    }
 }
