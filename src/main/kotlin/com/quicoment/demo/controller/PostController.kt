@@ -28,6 +28,11 @@ class PostController(@Autowired val postService: PostService) {
         return ResponseEntity.created(URI.create("/posts/${id}")).build()
     }
 
+    @GetMapping("/posts")
+    fun findPost(): ResponseEntity<ResultOf<*>> {
+        return ResponseEntity.ok(ResultOf.Success(postService.findPost()))
+    }
+
     @GetMapping("/posts/{id}")
     fun findPostById(@PathVariable("id") id: Long?): ResponseEntity<ResultOf<*>> {
         id
