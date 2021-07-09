@@ -44,7 +44,7 @@ class PostController(@Autowired val postService: PostService) {
     }
 
 
-    @PatchMapping("/posts/{id}")
+    @PutMapping("/posts/{id}")
     fun updatePost(@PathVariable("id") id: Long?, @RequestBody post: PostRequest): ResponseEntity<ResultOf<*>> {
         val errorResponse = ResultOf.Error(ErrorCase.INVALID_FIELD.getCode(), ErrorCase.INVALID_FIELD.getMessage())
 
