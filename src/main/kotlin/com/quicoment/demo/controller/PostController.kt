@@ -38,7 +38,7 @@ class PostController(@Autowired val postService: PostService) {
         id
             ?: return ResponseEntity.badRequest().body(ResultOf.Error(ErrorCase.INVALID_FIELD.getCode(), ErrorCase.INVALID_FIELD.getMessage()))
 
-        val post = postService.findPostById(id)
+        val post = postService.findPostById(id).id
             ?: return ResponseEntity.badRequest().body(ResultOf.Error(ErrorCase.NO_SUCH_POST.getCode(), ErrorCase.NO_SUCH_POST.getMessage()))
         return ResponseEntity.ok(ResultOf.Success(post))
     }
@@ -53,10 +53,8 @@ class PostController(@Autowired val postService: PostService) {
         post.content ?: return ResponseEntity.badRequest().body(errorResponse)
         post.password ?: return ResponseEntity.badRequest().body(errorResponse)
 
-        postService.updatePost(id, post.title, post.content, post.password).id
-            ?: return ResponseEntity.internalServerError().body(ResultOf.Error(ErrorCase.CONNECTION_FAIL.getCode(), ErrorCase.CONNECTION_FAIL.getMessage()))
-
-        return ResponseEntity.created(URI.create("/posts/${id}")).build()
+        postService.updatePost(id, post.title, post.content, post.password)
+        return ResponseEntity.ok().build()
     }
 
     @DeleteMapping("/posts/{id}")
