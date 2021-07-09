@@ -36,7 +36,7 @@ class GlobalExceptionHandler {
     }
 
     @ExceptionHandler
-    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+    @ResponseStatus(code = HttpStatus.NOT_FOUND)
     fun handleNoSuchPost(e: NoSuchPostException): ResponseEntity<ResultOf.Error> {
         return ResponseEntity.badRequest().body(ResultOf.Error(ErrorCase.NO_SUCH_POST.getCode(), ErrorCase.NO_SUCH_POST.getMessage()))
     }
