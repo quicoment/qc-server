@@ -42,4 +42,20 @@ class PostController(@Autowired val postService: PostService) {
             ?: return ResponseEntity.badRequest().body(ResultOf.Error(ErrorCase.NO_SUCH_POST.getCode(), ErrorCase.NO_SUCH_POST.getMessage()))
         return ResponseEntity.ok(ResultOf.Success(post))
     }
+
+
+    @PatchMapping("/posts/{id}")
+    fun updatePost(@PathVariable("id") id: Long?, @RequestBody post: PostRequest): ResponseEntity<ResultOf<*>> {
+        val errorResponse = ResultOf.Error(ErrorCase.INVALID_FIELD.getCode(), ErrorCase.INVALID_FIELD.getMessage())
+
+        id ?: return ResponseEntity.badRequest().body(errorResponse)
+        post.title ?: return ResponseEntity.badRequest().body(errorResponse)
+        post.content ?: return ResponseEntity.badRequest().body(errorResponse)
+        post.password ?: return ResponseEntity.badRequest().body(errorResponse)
+
+        postService.updatePost(id, post.title, post.content, post.password).id
+            ?: return ResponseEntity.internalServerError().body(ResultOf.Error(ErrorCase.CONNECTION_FAIL.getCode(), ErrorCase.CONNECTION_FAIL.getMessage()))
+
+        return ResponseEntity.created(URI.create("/posts/${id}")).build()
+    }
 }
