@@ -1,9 +1,11 @@
 package com.quicoment.demo.service
 
+import com.quicoment.demo.common.error.custom.NoSuchPostException
 import com.quicoment.demo.domain.Post
 import com.quicoment.demo.repository.PostRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import javax.transaction.Transactional
 
 @Service
 class PostService(@Autowired private val postRepository: PostRepository) {
@@ -12,7 +14,21 @@ class PostService(@Autowired private val postRepository: PostRepository) {
         return postRepository.save(post)
     }
 
-    fun findPostById(id: Long): Post? {
-        return postRepository.findById(id).orElse(null)
+    fun findPost(): List<Post> {
+        return postRepository.findAll()
+    }
+
+    fun findPostById(id: Long): Post {
+        return postRepository.findById(id).orElseThrow { NoSuchPostException() }
+    }
+
+    @Transactional
+    fun updatePost(id: Long, title: String, content: String, password: String) {
+        val post: Post = postRepository.findById(id).orElseThrow { NoSuchPostException() }
+        post.update(title, content, password)
+    }
+
+    fun deletePost(id: Long) {
+        return postRepository.deleteById(id)
     }
 }

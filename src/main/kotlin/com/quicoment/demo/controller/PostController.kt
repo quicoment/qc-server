@@ -3,6 +3,7 @@ package com.quicoment.demo.controller
 import com.quicoment.demo.common.ResultOf
 import com.quicoment.demo.common.error.custom.InvalidFieldException
 import com.quicoment.demo.common.error.custom.NoSuchPostException
+import com.quicoment.demo.common.error.ErrorCase
 import com.quicoment.demo.domain.Post
 import com.quicoment.demo.dto.PostRequest
 import com.quicoment.demo.service.PostService
@@ -32,11 +33,36 @@ class PostController(@Autowired val postService: PostService) {
         return ResponseEntity.created(URI.create("/posts/${id}")).build()
     }
 
+    @GetMapping("/posts")
+    fun findPost(): ResponseEntity<ResultOf<*>> {
+        return ResponseEntity.ok(ResultOf.Success(postService.findPost()))
+    }
+
     @GetMapping("/posts/{id}")
     fun findPostById(@PathVariable("id") id: Long?): ResponseEntity<ResultOf<*>> {
         id ?: throw InvalidFieldException()
 
         val post: Post = postService.findPostById(id) ?: throw NoSuchPostException()
         return ResponseEntity.ok(ResultOf.Success(post))
+    }
+
+
+    @PutMapping("/posts/{id}")
+    fun updatePost(@PathVariable("id") id: Long?, @RequestBody post: PostRequest): ResponseEntity<ResultOf<*>> {
+        id ?: throw InvalidFieldException()
+        post.title ?: throw InvalidFieldException()
+        post.content ?: throw InvalidFieldException()
+        post.password ?: throw InvalidFieldException()
+
+        postService.updatePost(id, post.title, post.content, post.password)
+        return ResponseEntity.ok().build()
+    }
+
+    @DeleteMapping("/posts/{id}")
+    fun deletePost(@PathVariable("id") id: Long?): ResponseEntity<ResultOf<*>> {
+        id ?: throw InvalidFieldException()
+
+        postService.deletePost(id)
+        return ResponseEntity.ok(ResultOf.Success(postService.findPost()))
     }
 }
