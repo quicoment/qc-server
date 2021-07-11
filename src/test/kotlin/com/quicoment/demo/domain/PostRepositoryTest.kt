@@ -18,6 +18,7 @@ class PostRepositoryTest {
 
     @Autowired
     private lateinit var postRepository: PostRepository
+
     @PersistenceContext
     private lateinit var entityManager: EntityManager
 

@@ -10,7 +10,7 @@ import javax.persistence.MappedSuperclass
 open class BaseEntity {
     @CreationTimestamp
     @Column(name = "create_at", nullable = false, updatable = false)
-    open var createAt: LocalDateTime? = null
+    open val createAt: LocalDateTime? = null
 
     @UpdateTimestamp
     @Column(name = "update_at")
