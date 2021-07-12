@@ -1,5 +1,6 @@
 package com.quicoment.demo.domain
 
+import com.quicoment.demo.dto.PostResponse
 import javax.persistence.*
 
 @Entity
@@ -27,5 +28,9 @@ class Post(var title: String, var content: String, var password: String) : BaseE
         this.title = newTitle
         this.content = newContent
         this.password = newPassword
+    }
+
+    fun toResponseDto(): PostResponse {
+        return PostResponse(id, title, content, password)
     }
 }
