@@ -29,8 +29,8 @@ class PostController(@Autowired val postService: PostService) {
     }
 
     @GetMapping("/posts")
-    fun findPost(): ResponseEntity<ResultOf<*>> {
-        return ResponseEntity.ok(ResultOf.Success(postService.findPost()))
+    fun findAllPosts(): ResponseEntity<ResultOf<*>> {
+        return ResponseEntity.ok(ResultOf.Success(postService.findAllPosts()))
     }
 
     @GetMapping("/posts/{id}")
@@ -38,7 +38,6 @@ class PostController(@Autowired val postService: PostService) {
         id ?: throw InvalidFieldException()
         return ResponseEntity.ok(ResultOf.Success(postService.findPostById(id)))
     }
-
 
     @PutMapping("/posts/{id}")
     fun updatePost(@PathVariable("id") id: Long?, @RequestBody post: PostRequest): ResponseEntity<ResultOf<*>> {
@@ -54,8 +53,7 @@ class PostController(@Autowired val postService: PostService) {
     @DeleteMapping("/posts/{id}")
     fun deletePost(@PathVariable("id") id: Long?): ResponseEntity<ResultOf<*>> {
         id ?: throw InvalidFieldException()
-
         postService.deletePost(id)
-        return ResponseEntity.ok(ResultOf.Success(postService.findPost()))
+        return ResponseEntity.noContent().build()
     }
 }
