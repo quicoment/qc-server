@@ -30,14 +30,12 @@ class PostController(@Autowired val postService: PostService) {
     }
 
     @GetMapping("/posts/{id}")
-    fun findPostById(@PathVariable("id") id: Long?): ResponseEntity<ResultOf<*>> {
-        id ?: throw InvalidFieldException()
+    fun findPostById(@PathVariable("id") id: Long): ResponseEntity<ResultOf<*>> {
         return ResponseEntity.ok(ResultOf.Success(postService.findPostById(id)))
     }
 
     @PutMapping("/posts/{id}")
-    fun updatePost(@PathVariable("id") id: Long?, @RequestBody post: PostRequest): ResponseEntity<ResultOf<*>> {
-        id ?: throw InvalidFieldException()
+    fun updatePost(@PathVariable("id") id: Long, @RequestBody post: PostRequest): ResponseEntity<ResultOf<*>> {
         post.title ?: throw InvalidFieldException()
         post.content ?: throw InvalidFieldException()
         post.password ?: throw InvalidFieldException()
@@ -47,8 +45,7 @@ class PostController(@Autowired val postService: PostService) {
     }
 
     @DeleteMapping("/posts/{id}")
-    fun deletePost(@PathVariable("id") id: Long?): ResponseEntity<ResultOf<*>> {
-        id ?: throw InvalidFieldException()
+    fun deletePost(@PathVariable("id") id: Long): ResponseEntity<ResultOf<*>> {
         postService.deletePost(id)
         return ResponseEntity.noContent().build()
     }
