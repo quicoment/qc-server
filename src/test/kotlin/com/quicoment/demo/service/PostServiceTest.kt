@@ -51,7 +51,7 @@ class PostServiceTest(
     fun findAllPostsTestSuccess() {
         //given
         val post = Post("title-example", "content-example", "password-example")
-        val postId: Long? = postRepository.save(post).id
+        postRepository.save(post)
 
         //when
         val posts: List<PostResponse> = postService.findAllPosts()
