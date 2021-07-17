@@ -17,7 +17,7 @@ class PostService(@Autowired private val postRepository: PostRepository) {
     @Transactional
     fun savePost(post: Post): Long {
         return postRepository.save(post).toResponseDto().id
-                ?: throw FailCreateResourceException(ErrorCase.SAVE_POST_FAIL.getMessage())
+            ?: throw FailCreateResourceException(ErrorCase.SAVE_POST_FAIL.getMessage())
     }
 
     fun findAllPosts(): List<PostResponse> {
@@ -26,19 +26,20 @@ class PostService(@Autowired private val postRepository: PostRepository) {
 
     fun findPostById(id: Long): PostResponse {
         return postRepository.findById(id)
-                .orElseThrow { NoSuchResourceException(ErrorCase.NO_SUCH_POST.getMessage()) }
-                .toResponseDto()
+            .orElseThrow { NoSuchResourceException(ErrorCase.NO_SUCH_POST.getMessage()) }
+            .toResponseDto()
     }
 
     @Transactional
     fun updatePost(id: Long, title: String, content: String, password: String) {
-        val post: Post = postRepository.findById(id)
-                .orElseThrow { NoSuchResourceException(ErrorCase.NO_SUCH_POST.getMessage()) }
-        post.update(title, content, password)
+        postRepository.findById(id)
+            .orElseThrow { NoSuchResourceException(ErrorCase.NO_SUCH_POST.getMessage()) }
+            .update(title, content, password)
     }
 
     @Transactional
     fun deletePost(id: Long) {
-        return postRepository.deleteById(id)
+        postRepository.findById(id).orElseThrow { NoSuchResourceException(ErrorCase.NO_SUCH_POST.getMessage()) }
+            .let { postRepository.delete(it) }
     }
 }
