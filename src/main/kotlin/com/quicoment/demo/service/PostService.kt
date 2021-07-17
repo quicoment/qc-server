@@ -32,16 +32,14 @@ class PostService(@Autowired private val postRepository: PostRepository) {
 
     @Transactional
     fun updatePost(id: Long, title: String, content: String, password: String) {
-        val post: Post = postRepository.findById(id)
+        postRepository.findById(id)
             .orElseThrow { NoSuchResourceException(ErrorCase.NO_SUCH_POST.getMessage()) }
-        post.update(title, content, password)
+            .update(title, content, password)
     }
 
     @Transactional
     fun deletePost(id: Long) {
-        if (postRepository.existsById(id)) {
-            return postRepository.deleteById(id)
-        }
-        throw NoSuchResourceException(ErrorCase.NO_SUCH_POST.getMessage())
+        postRepository.findById(id).orElseThrow { NoSuchResourceException(ErrorCase.NO_SUCH_POST.getMessage()) }
+            .let { postRepository.delete(it) }
     }
 }
