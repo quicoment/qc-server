@@ -1,11 +1,11 @@
 package com.quicoment.demo.config
 
-import org.springframework.amqp.core.Binding
-import org.springframework.amqp.core.BindingBuilder
-import org.springframework.amqp.core.Queue
-import org.springframework.amqp.core.TopicExchange
+import org.springframework.amqp.core.*
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
+import org.springframework.amqp.rabbit.core.RabbitAdmin
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
+import org.springframework.amqp.support.converter.MessageConverter
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -19,13 +19,11 @@ class RabbitConfiguration(
     @Value("\${rabbitmq.port}") private val RABBITMQ_PORT: String,
     @Value("\${rabbitmq.username}") private val USERNAME: String,
     @Value("\${rabbitmq.password}") private val PASSWORD: String,
-    @Value("\${rabbitmq.queue-name}") private val QUEUE_NAME: String,
-    @Value("\${rabbitmq.exchange-name}") private val EXCHANGE_NAME: String,
-    @Value("\${rabbitmq.routing-key}") private val ROUTING_KEY: String
+    @Value("\${rabbitmq.exchange-name-domain}") private val EXCHANGE_NAME: String,
 ) {
 
     @Bean
-    fun getConnectionFactory(): ConnectionFactory {
+    fun connectionFactory(): ConnectionFactory {
         val connectionFactory = CachingConnectionFactory(RABBITMQ_HOST, RABBITMQ_PORT.toInt())
         connectionFactory.username = USERNAME
         connectionFactory.setPassword(PASSWORD)
@@ -33,22 +31,22 @@ class RabbitConfiguration(
     }
 
     @Bean
-    fun getExchange(): TopicExchange {
-        return TopicExchange(EXCHANGE_NAME)
+    fun rabbitAdmin(connectionFactory: ConnectionFactory): AmqpAdmin {
+        return RabbitAdmin(connectionFactory)
     }
 
     @Bean
-    fun defaultQueue(): Queue {
-        return Queue(QUEUE_NAME)
+    fun commentRegisterExchange(): DirectExchange {
+        return DirectExchange("${EXCHANGE_NAME}.comment.register")
     }
 
     @Bean
-    fun defaultTopicExchange(): TopicExchange {
-        return TopicExchange(EXCHANGE_NAME)
+    fun commentLikeExchange(): TopicExchange {
+        return TopicExchange("${EXCHANGE_NAME}.comment.like")
     }
 
     @Bean
-    fun defaultBinding(defaultQueue: Queue, defaultTopicExchange: TopicExchange): Binding {
-        return BindingBuilder.bind(defaultQueue).to(defaultTopicExchange).with(ROUTING_KEY)
+    fun messageConverter(): MessageConverter {
+        return Jackson2JsonMessageConverter()
     }
 }
