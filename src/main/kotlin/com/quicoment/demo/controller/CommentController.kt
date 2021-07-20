@@ -7,6 +7,7 @@ import com.quicoment.demo.service.CommentService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -15,10 +16,17 @@ import org.springframework.web.bind.annotation.RequestBody
 class CommentController(@Autowired val commentService: CommentService) {
 
     @PostMapping("/posts/{postId}/comments")
-    fun newComment(@PathVariable postId: Long, @RequestBody comment: CommentRequest): ResponseEntity<ResultOf<*>> {
+    fun registerComment(@PathVariable postId: Long, @RequestBody comment: CommentRequest): ResponseEntity<ResultOf<*>> {
         comment.content ?: throw InvalidFieldException()
+        comment.password ?: throw InvalidFieldException()
 
-        commentService.enqueueComment(postId, comment.content)
+        commentService.registerComment(postId, comment)
+        return ResponseEntity.ok().build()
+    }
+
+    @GetMapping("/posts/{postId}/comments/{commentId}")
+    fun likeComment(@PathVariable postId: Long, @PathVariable commentId: Long): ResponseEntity<ResultOf<*>> {
+        commentService.likeComment(postId, commentId)
         return ResponseEntity.ok().build()
     }
 }
