@@ -39,3 +39,4 @@ out/
 
 ### serucity
 src/main/resources/application-dev.yml
+src/main/resources/rabbit-mq.yml
