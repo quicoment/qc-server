@@ -4,4 +4,4 @@ spring:
     url: jdbc:tc:mysql:///quicoment
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
