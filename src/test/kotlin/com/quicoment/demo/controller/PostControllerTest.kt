@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.BDDMockito.doNothing
 import org.mockito.BDDMockito.given
+import org.springframework.amqp.AmqpException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
@@ -124,6 +125,25 @@ class PostControllerTest(@Autowired val mockMvc: MockMvc) {
             status { isInternalServerError() }
             jsonPath("\$.code") { value(HttpStatus.INTERNAL_SERVER_ERROR.value()) }
             jsonPath("\$.message") { value("fail save null entity") }
+        }
+    }
+
+    @DisplayName("amqp exception")
+    @Test
+    fun savePostTestFail4() {
+        val postRequest = PostRequest("title-example", "content-example", "password-example")
+        val postEntity = Post("title-example", "content-example", "password-example")
+
+        given(postService.savePost(postEntity)).willThrow(AmqpException("amqp fail"))
+
+        mockMvc.post("/posts") {
+            contentType = APPLICATION_JSON
+            content = mapper.writeValueAsString(postRequest)
+            accept = APPLICATION_JSON
+        }.andExpect {
+            status { isInternalServerError() }
+            jsonPath("\$.code") { value(HttpStatus.INTERNAL_SERVER_ERROR.value()) }
+            jsonPath("\$.message") { value(ErrorCase.CONNECTION_FAIL.getMessage()) }
         }
     }
 

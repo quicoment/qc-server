@@ -33,4 +33,8 @@ class Post(var title: String, var content: String, var password: String) : BaseE
     fun toResponseDto(): PostResponse {
         return PostResponse(id, title, content, password)
     }
+
+    override fun toString(): String {
+        return "Post(id=$id, title='$title', content='$content', password='$password')"
+    }
 }
