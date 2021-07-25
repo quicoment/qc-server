@@ -1,123 +1,285 @@
 package com.quicoment.demo.service
 
+import com.nhaarman.mockitokotlin2.*
+import com.quicoment.demo.common.error.ErrorCase
+import com.quicoment.demo.common.error.custom.FailCreateResourceException
 import com.quicoment.demo.common.error.custom.NoSuchResourceException
 import com.quicoment.demo.domain.Post
-import com.quicoment.demo.dto.PostResponse
 import com.quicoment.demo.repository.PostRepository
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
-import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.jdbc.Sql
-import org.springframework.test.context.jdbc.SqlConfig
-import org.springframework.test.context.jdbc.SqlGroup
-import org.springframework.test.context.junit.jupiter.SpringExtension
+import org.mockito.ArgumentMatchers.anyLong
+import org.mockito.Mockito
+import org.mockito.junit.jupiter.MockitoExtension
+import org.springframework.amqp.AmqpException
+import org.springframework.amqp.core.DirectExchange
+import org.springframework.amqp.core.TopicExchange
+import org.springframework.amqp.rabbit.core.RabbitAdmin
 import java.util.*
 
-@ActiveProfiles("test")
-@SqlGroup(
-    Sql(scripts = ["/db/init.sql"], executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD, config = SqlConfig(encoding = "utf-8")),
-    Sql(scripts = ["/db/teardown.sql"], executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD, config = SqlConfig(encoding = "utf-8"))
-)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ExtendWith(SpringExtension::class)
-@SpringBootTest
-class PostServiceTest(
-    @Autowired val postService: PostService,
-    @Autowired val postRepository: PostRepository
-) {
+@ExtendWith(MockitoExtension::class)
+class PostServiceTest {
+    private val mockRabbitAdmin: RabbitAdmin = mock()
+    private val mockCommentRegisterExchange: DirectExchange = mock()
+    private val mockCommentLikeExchange: TopicExchange = mock()
+    private val queueDomain = "q.example"
 
-    @DisplayName("post save 성공 테스트")
+    private val post = Post(1, "title", "content", "password")
+
+
     @Test
     fun savePostTestSuccess() {
-        //given
-        val post = Post("title-example", "content-example", "password-example")
+        // given
+        val postRepository: PostRepository = mock { on { save(post) } doReturn post }
+        doReturn("${queueDomain}.post.${post.id}").`when`(mockRabbitAdmin).declareQueue(any())
+        doNothing().`when`(mockRabbitAdmin).declareBinding(any())
 
-        //when
-        val savedPostId: Long = postService.savePost(post)
+        // when
+        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        val result = postService.savePost(post)
 
-        //then
-        val findPost: Post = postRepository.findById(savedPostId).get()
-        assertAll(
-            { assertEquals(savedPostId, findPost.id) },
-            { assertEquals(post.title, findPost.title) },
-            { assertEquals(post.content, findPost.content) },
-            { assertEquals(post.password, findPost.password) }
-        )
+        // then
+        Mockito.verify(postRepository).save(post)
+        assertEquals(1, result)
     }
 
-    @DisplayName("post findAllPosts 성공 테스트")
     @Test
-    fun findAllPostsTestSuccess() {
-        System.out.println(postRepository.findAll())
-        //when
-        val posts: List<PostResponse> = postService.findAllPosts()
+    @DisplayName("save post fail - post id is null")
+    fun savePostTestFail1() {
+        // given
+        val noIdPost = Post("title", "content", "password")
+        val postRepository: PostRepository = mock { on { save(noIdPost) } doReturn noIdPost }
 
-        //then
-        assertTrue(posts.isNotEmpty())
+        // when
+        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+
+        // then
+        val exception = assertThrows(FailCreateResourceException::class.java) {
+            postService.savePost(noIdPost)
+        }
+        Mockito.verify(postRepository).save(noIdPost)
+        assertEquals(exception.message, ErrorCase.SAVE_POST_FAIL.getMessage())
     }
 
-    @DisplayName("post findPostById 성공 테스트")
+    @Test
+    @DisplayName("save post fail - fail declare queue")
+    fun savePostTestFail2() {
+        // given
+        val postRepository: PostRepository = mock { on { save(post) } doReturn post }
+        val rabbitAdmin: RabbitAdmin = mock {
+            on { declareQueue(any()) } doThrow AmqpException("fail declare queue")
+        }
+
+        // when
+        val postService = PostService(postRepository, rabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+
+        // then
+        val exception = assertThrows(AmqpException::class.java) {
+            postService.savePost(post)
+        }
+        assertEquals(exception.message, "fail declare queue")
+        Mockito.verify(postRepository).save(post)
+    }
+
+    @Test
+    @DisplayName("save post fail - fail declare binding")
+    fun savePostTestFail3() {
+        // given
+        val postRepository: PostRepository = mock { on { save(post) } doReturn post }
+        val rabbitAdmin: RabbitAdmin = mock {
+            on { declareBinding(any()) } doThrow AmqpException("fail declare binding")
+        }
+        doReturn("${queueDomain}.post.${post.id}").`when`(rabbitAdmin).declareQueue(any())
+
+        // when
+        val postService = PostService(postRepository, rabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+
+        // then
+        val exception = assertThrows(AmqpException::class.java) {
+            postService.savePost(post)
+        }
+        assertEquals(exception.message, "fail declare binding")
+        Mockito.verify(postRepository).save(post)
+    }
+
+    @Test
+    fun findAllPostsTestSuccess1() {
+        // given
+        val posts = listOf(Post("title1", "content1", "password1"), Post("title2", "content2", "password2"))
+        val postRepository: PostRepository = mock { on { findAll() } doReturn posts }
+
+        // when
+        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        val result = postService.findAllPosts()
+
+        // then
+        Mockito.verify(postRepository).findAll()
+        assertEquals(2, result.size)
+        assertEquals(posts.map { it.toResponseDto() }, result)
+    }
+
+    @Test
+    @DisplayName("find all post success - all posts list is empty")
+    fun findAllPostsTestSuccess2() {
+        // given
+        val postRepository: PostRepository = mock { on { findAll() } doReturn emptyList<Post>() }
+
+        // when
+        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        val result = postService.findAllPosts()
+
+        // then
+        Mockito.verify(postRepository).findAll()
+        assertEquals(emptyList<Post>(), result)
+    }
+
     @Test
     fun findPostByIdTestSuccess() {
-        //when
-        val findPost: PostResponse = postService.findPostById(1L)
+        // given
+        val postRepository: PostRepository = mock { on { findById(1) } doReturn Optional.of(post) }
 
-        //then
-        assertAll(
-            { assertEquals(1L, findPost.id) }
-        )
+        // when
+        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        val result = postService.findPostById(1)
+
+        // then
+        Mockito.verify(postRepository).findById(1)
+        assertEquals(post.toResponseDto(), result)
+        assertEquals(1, result.id)
+        assertEquals("title", result.title)
+        assertEquals("content", result.content)
+        assertEquals("password", result.password)
     }
 
-    @DisplayName("post findById 실패 테스트 - post id 없음 오류")
     @Test
-    fun findPostByIdTestFail() {
-        assertThatThrownBy { postService.findPostById(100L) }.isInstanceOf(NoSuchResourceException::class.java)
+    @DisplayName("post findById fail - no such post id")
+    fun findPostByIdTestFail1() {
+        // given
+        val postRepository: PostRepository = mock {
+            on {
+                findById(100)
+            } doReturn Optional.empty()
+        }
+
+        // when
+        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+
+        // then
+        val exception = assertThrows(NoSuchResourceException::class.java) {
+            postService.findPostById(100)
+        }
+        Mockito.verify(postRepository).findById(100)
+        assertEquals(exception.message, ErrorCase.NO_SUCH_POST.getMessage())
     }
 
-    @DisplayName("post update 성공 테스트")
+    @Test
+    @DisplayName("post findById fail - post id is null")
+    fun findPostByIdTestFail2() {
+        // given
+        val postRepository: PostRepository = mock {
+            on {
+                findById(anyLong())
+            } doThrow IllegalArgumentException("post id must not be null")
+        }
+
+        // when
+        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+
+        // then
+        val exception = assertThrows(IllegalArgumentException::class.java) {
+            postService.findPostById(1)
+        }
+        Mockito.verify(postRepository).findById(1)
+        assertEquals(exception.message, "post id must not be null")
+    }
+
     @Test
     fun updatePostTestSuccess() {
-        //when
-        postService.updatePost(1L, "title-example-changed", "content-example-changed", "password-example-changed")
+        // given
+        val postRepository: PostRepository = mock { on { findById(1) } doReturn Optional.of(post) }
 
-        //then
-        val findPost: Post = postRepository.findById(1L).get()
-        assertAll(
-            { assertEquals(1L, findPost.id) },
-            { assertEquals("title-example-changed", findPost.title) },
-            { assertEquals("content-example-changed", findPost.content) },
-            { assertEquals("password-example-changed", findPost.password) }
-        )
+        // when
+        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        postService.updatePost(1, "new_title", "new_content", "new_password")
+
+        // then
+        Mockito.verify(postRepository).findById(1)
+        assertEquals("new_title", post.title)
+        assertEquals("new_content", post.content)
+        assertEquals("new_password", post.password)
     }
 
-    @DisplayName("post update 실패 테스트 - post id 없음 오류")
     @Test
-    fun updatePostTestFail() {
-        assertThatThrownBy { postService.updatePost(100L, "title-example-changed", "content-example-changed", "password-example-changed") }.isInstanceOf(NoSuchResourceException::class.java)
+    @DisplayName("update post fail - no such post id")
+    fun updatePostTestFail1() {
+        // given
+        val postRepository: PostRepository = mock {
+            on { findById(100) } doReturn Optional.empty()
+        }
+
+        // when
+        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+
+        // then
+        val exception = assertThrows(NoSuchResourceException::class.java) {
+            postService.updatePost(100, "new_title", "new_content", "new_password")
+        }
+        Mockito.verify(postRepository).findById(100)
+        assertEquals(exception.message, ErrorCase.NO_SUCH_POST.getMessage())
     }
 
-    @DisplayName("post delete 성공 테스트")
     @Test
-    fun deletePostTestSuccess() {
-        //when
-        postService.deletePost(1L)
+    fun deletePostTestSuccess1() {
+        // given
+        val postRepository: PostRepository = mock { on { findById(1) } doReturn Optional.of(post) }
+        doNothing().`when`(postRepository).delete(post)
 
-        //then
-        val findPost: Optional<Post> = postRepository.findById(1L)
-        assertTrue(findPost.isEmpty)
+        val rabbitAdmin: RabbitAdmin = mock { on { deleteQueue(any()) } doReturn true }
+
+        // when
+        val postService = PostService(postRepository, rabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        postService.deletePost(1)
+
+        // then
+        Mockito.verify(postRepository).findById(1)
+        Mockito.verify(postRepository).delete(post)
     }
 
-    @DisplayName("post delete 실패 테스트 - post id 없음 오류")
     @Test
+    @DisplayName("delete post success - no such queue")
+    fun deletePostTestSuccess2() {
+        // given
+        val postRepository: PostRepository = mock { on { findById(1) } doReturn Optional.of(post) }
+        doNothing().`when`(postRepository).delete(post)
+
+        val rabbitAdmin: RabbitAdmin = mock { on { deleteQueue(any()) } doReturn false }
+
+        // when
+        val postService = PostService(postRepository, rabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        postService.deletePost(1)
+
+        // then
+        Mockito.verify(postRepository).findById(1)
+        Mockito.verify(postRepository).delete(post)
+    }
+
+    @Test
+    @DisplayName("delete post fail - no such post id")
     fun deletePostTestFail() {
-        assertThatThrownBy { postService.deletePost(100L) }.isInstanceOf(NoSuchResourceException::class.java)
+        // given
+        val postRepository: PostRepository = mock { on { findById(1) } doReturn Optional.empty() }
+
+        // when
+        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+
+        // then
+        val exception = assertThrows(NoSuchResourceException::class.java) {
+            postService.deletePost(1)
+        }
+        Mockito.verify(postRepository).findById(1)
+        assertEquals(exception.message, ErrorCase.NO_SUCH_POST.getMessage())
     }
 }
