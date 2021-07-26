@@ -8,7 +8,7 @@ import javax.persistence.*
 class Post(var title: String, var content: String, var password: String) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null
+    var id: Long? = null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -22,6 +22,10 @@ class Post(var title: String, var content: String, var password: String) : BaseE
 
     override fun hashCode(): Int {
         return id?.hashCode() ?: 0
+    }
+
+    constructor(id: Long, title: String, content: String, password: String) : this(title, content, password) {
+        this.id = id
     }
 
     fun update(newTitle: String, newContent: String, newPassword: String) {
