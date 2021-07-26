@@ -1,6 +1,9 @@
 package com.quicoment.demo.service
 
-import com.nhaarman.mockitokotlin2.*
+import com.nhaarman.mockitokotlin2.doNothing
+import com.nhaarman.mockitokotlin2.doReturn
+import com.nhaarman.mockitokotlin2.doThrow
+import com.nhaarman.mockitokotlin2.mock
 import com.quicoment.demo.common.error.ErrorCase
 import com.quicoment.demo.common.error.custom.FailCreateResourceException
 import com.quicoment.demo.common.error.custom.NoSuchResourceException
@@ -15,18 +18,11 @@ import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
 import org.springframework.amqp.AmqpException
-import org.springframework.amqp.core.DirectExchange
-import org.springframework.amqp.core.TopicExchange
-import org.springframework.amqp.rabbit.core.RabbitAdmin
 import java.util.*
 
 @ExtendWith(MockitoExtension::class)
 class PostServiceTest {
-    private val mockRabbitAdmin: RabbitAdmin = mock()
-    private val mockCommentRegisterExchange: DirectExchange = mock()
-    private val mockCommentLikeExchange: TopicExchange = mock()
-    private val queueDomain = "q.example"
-
+    private val mockMQService: MQService = mock()
     private val post = Post(1, "title", "content", "password")
 
     @Test
@@ -34,11 +30,10 @@ class PostServiceTest {
         // given
         val noIdPost = Post("title", "content", "password")
         val postRepository: PostRepository = mock { on { save(noIdPost) } doReturn post }
-        doReturn("${queueDomain}.post.${post.id}").`when`(mockRabbitAdmin).declareQueue(any())
-        doNothing().`when`(mockRabbitAdmin).declareBinding(any())
+        doNothing().`when`(mockMQService).declarePostQueue("1")
 
         // when
-        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        val postService = PostService(postRepository, mockMQService)
         val result = postService.savePost(noIdPost)
 
         // then
@@ -54,7 +49,7 @@ class PostServiceTest {
         val postRepository: PostRepository = mock { on { save(noIdPost) } doReturn noIdPost }
 
         // when
-        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        val postService = PostService(postRepository, mockMQService)
 
         // then
         val exception = assertThrows(FailCreateResourceException::class.java) {
@@ -65,17 +60,15 @@ class PostServiceTest {
     }
 
     @Test
-    @DisplayName("save post fail - fail declare queue")
+    @DisplayName("save post fail - fail declare queue or fail declare binding")
     fun savePostTestFail2() {
         // given
         val noIdPost = Post("title", "content", "password")
         val postRepository: PostRepository = mock { on { save(noIdPost) } doReturn post }
-        val rabbitAdmin: RabbitAdmin = mock {
-            on { declareQueue(any()) } doThrow AmqpException("fail declare queue")
-        }
+        doThrow(AmqpException("fail declare queue")).`when`(mockMQService).declarePostQueue("1")
 
         // when
-        val postService = PostService(postRepository, rabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        val postService = PostService(postRepository, mockMQService)
 
         // then
         val exception = assertThrows(AmqpException::class.java) {
@@ -85,27 +78,6 @@ class PostServiceTest {
         Mockito.verify(postRepository).save(noIdPost)
     }
 
-    @Test
-    @DisplayName("save post fail - fail declare binding")
-    fun savePostTestFail3() {
-        // given
-        val noIdPost = Post("title", "content", "password")
-        val postRepository: PostRepository = mock { on { save(noIdPost) } doReturn post }
-        val rabbitAdmin: RabbitAdmin = mock {
-            on { declareBinding(any()) } doThrow AmqpException("fail declare binding")
-        }
-        doReturn("${queueDomain}.post.${post.id}").`when`(rabbitAdmin).declareQueue(any())
-
-        // when
-        val postService = PostService(postRepository, rabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
-
-        // then
-        val exception = assertThrows(AmqpException::class.java) {
-            postService.savePost(noIdPost)
-        }
-        assertEquals(exception.message, "fail declare binding")
-        Mockito.verify(postRepository).save(noIdPost)
-    }
 
     @Test
     fun findAllPostsTestSuccess1() {
@@ -114,7 +86,7 @@ class PostServiceTest {
         val postRepository: PostRepository = mock { on { findAll() } doReturn posts }
 
         // when
-        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        val postService = PostService(postRepository, mockMQService)
         val result = postService.findAllPosts()
 
         // then
@@ -130,7 +102,7 @@ class PostServiceTest {
         val postRepository: PostRepository = mock { on { findAll() } doReturn emptyList<Post>() }
 
         // when
-        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        val postService = PostService(postRepository, mockMQService)
         val result = postService.findAllPosts()
 
         // then
@@ -144,7 +116,7 @@ class PostServiceTest {
         val postRepository: PostRepository = mock { on { findById(1) } doReturn Optional.of(post) }
 
         // when
-        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        val postService = PostService(postRepository, mockMQService)
         val result = postService.findPostById(1)
 
         // then
@@ -167,7 +139,7 @@ class PostServiceTest {
         }
 
         // when
-        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        val postService = PostService(postRepository, mockMQService)
 
         // then
         val exception = assertThrows(NoSuchResourceException::class.java) {
@@ -188,7 +160,7 @@ class PostServiceTest {
         }
 
         // when
-        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        val postService = PostService(postRepository, mockMQService)
 
         // then
         val exception = assertThrows(IllegalArgumentException::class.java) {
@@ -204,7 +176,7 @@ class PostServiceTest {
         val postRepository: PostRepository = mock { on { findById(1) } doReturn Optional.of(post) }
 
         // when
-        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        val postService = PostService(postRepository, mockMQService)
         postService.updatePost(1, "new_title", "new_content", "new_password")
 
         // then
@@ -223,7 +195,7 @@ class PostServiceTest {
         }
 
         // when
-        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        val postService = PostService(postRepository, mockMQService)
 
         // then
         val exception = assertThrows(NoSuchResourceException::class.java) {
@@ -238,11 +210,10 @@ class PostServiceTest {
         // given
         val postRepository: PostRepository = mock { on { findById(1) } doReturn Optional.of(post) }
         doNothing().`when`(postRepository).delete(post)
-
-        val rabbitAdmin: RabbitAdmin = mock { on { deleteQueue(any()) } doReturn true }
+        doReturn(true).`when`(mockMQService).deletePostQueue("1")
 
         // when
-        val postService = PostService(postRepository, rabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        val postService = PostService(postRepository, mockMQService)
         postService.deletePost(1)
 
         // then
@@ -256,11 +227,10 @@ class PostServiceTest {
         // given
         val postRepository: PostRepository = mock { on { findById(1) } doReturn Optional.of(post) }
         doNothing().`when`(postRepository).delete(post)
-
-        val rabbitAdmin: RabbitAdmin = mock { on { deleteQueue(any()) } doReturn false }
+        doReturn(false).`when`(mockMQService).deletePostQueue("1")
 
         // when
-        val postService = PostService(postRepository, rabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        val postService = PostService(postRepository, mockMQService)
         postService.deletePost(1)
 
         // then
@@ -275,7 +245,7 @@ class PostServiceTest {
         val postRepository: PostRepository = mock { on { findById(1) } doReturn Optional.empty() }
 
         // when
-        val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
+        val postService = PostService(postRepository, mockMQService)
 
         // then
         val exception = assertThrows(NoSuchResourceException::class.java) {
