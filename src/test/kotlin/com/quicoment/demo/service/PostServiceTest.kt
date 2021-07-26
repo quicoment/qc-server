@@ -29,20 +29,20 @@ class PostServiceTest {
 
     private val post = Post(1, "title", "content", "password")
 
-
     @Test
     fun savePostTestSuccess() {
         // given
-        val postRepository: PostRepository = mock { on { save(post) } doReturn post }
+        val noIdPost = Post("title", "content", "password")
+        val postRepository: PostRepository = mock { on { save(noIdPost) } doReturn post }
         doReturn("${queueDomain}.post.${post.id}").`when`(mockRabbitAdmin).declareQueue(any())
         doNothing().`when`(mockRabbitAdmin).declareBinding(any())
 
         // when
         val postService = PostService(postRepository, mockRabbitAdmin, mockCommentRegisterExchange, mockCommentLikeExchange, queueDomain)
-        val result = postService.savePost(post)
+        val result = postService.savePost(noIdPost)
 
         // then
-        Mockito.verify(postRepository).save(post)
+        Mockito.verify(postRepository).save(noIdPost)
         assertEquals(1, result)
     }
 
@@ -68,7 +68,8 @@ class PostServiceTest {
     @DisplayName("save post fail - fail declare queue")
     fun savePostTestFail2() {
         // given
-        val postRepository: PostRepository = mock { on { save(post) } doReturn post }
+        val noIdPost = Post("title", "content", "password")
+        val postRepository: PostRepository = mock { on { save(noIdPost) } doReturn post }
         val rabbitAdmin: RabbitAdmin = mock {
             on { declareQueue(any()) } doThrow AmqpException("fail declare queue")
         }
@@ -78,17 +79,18 @@ class PostServiceTest {
 
         // then
         val exception = assertThrows(AmqpException::class.java) {
-            postService.savePost(post)
+            postService.savePost(noIdPost)
         }
         assertEquals(exception.message, "fail declare queue")
-        Mockito.verify(postRepository).save(post)
+        Mockito.verify(postRepository).save(noIdPost)
     }
 
     @Test
     @DisplayName("save post fail - fail declare binding")
     fun savePostTestFail3() {
         // given
-        val postRepository: PostRepository = mock { on { save(post) } doReturn post }
+        val noIdPost = Post("title", "content", "password")
+        val postRepository: PostRepository = mock { on { save(noIdPost) } doReturn post }
         val rabbitAdmin: RabbitAdmin = mock {
             on { declareBinding(any()) } doThrow AmqpException("fail declare binding")
         }
@@ -99,10 +101,10 @@ class PostServiceTest {
 
         // then
         val exception = assertThrows(AmqpException::class.java) {
-            postService.savePost(post)
+            postService.savePost(noIdPost)
         }
         assertEquals(exception.message, "fail declare binding")
-        Mockito.verify(postRepository).save(post)
+        Mockito.verify(postRepository).save(noIdPost)
     }
 
     @Test
