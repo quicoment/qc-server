@@ -1,5 +1,7 @@
 package com.quicoment.demo.dto
 
-data class CommentRequest(val content: String?, val password: String?) {
+import java.io.Serializable
+
+data class CommentRequest(val content: String?, val password: String?): Serializable {
     val messageType = "register"
 }
