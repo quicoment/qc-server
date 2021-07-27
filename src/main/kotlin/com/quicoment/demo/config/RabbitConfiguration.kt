@@ -1,9 +1,12 @@
 package com.quicoment.demo.config
 
-import org.springframework.amqp.core.*
+import org.springframework.amqp.core.AmqpAdmin
+import org.springframework.amqp.core.DirectExchange
+import org.springframework.amqp.core.TopicExchange
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitAdmin
+import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
 import org.springframework.amqp.support.converter.MessageConverter
 import org.springframework.beans.factory.annotation.Value
@@ -23,30 +26,24 @@ class RabbitConfiguration(
 ) {
 
     @Bean
-    fun connectionFactory(): ConnectionFactory {
-        val connectionFactory = CachingConnectionFactory(RABBITMQ_HOST, RABBITMQ_PORT.toInt())
-        connectionFactory.username = USERNAME
-        connectionFactory.setPassword(PASSWORD)
-        return connectionFactory
-    }
+    fun connectionFactory(): ConnectionFactory = CachingConnectionFactory(RABBITMQ_HOST, RABBITMQ_PORT.toInt())
+        .apply {
+            username = USERNAME
+            setPassword(PASSWORD)
+        }
 
     @Bean
-    fun rabbitAdmin(connectionFactory: ConnectionFactory): AmqpAdmin {
-        return RabbitAdmin(connectionFactory)
-    }
+    fun rabbitAdmin(connectionFactory: ConnectionFactory): AmqpAdmin = RabbitAdmin(connectionFactory)
 
     @Bean
-    fun commentRegisterExchange(): DirectExchange {
-        return DirectExchange("${EXCHANGE_NAME}.comment.register")
-    }
+    fun rabbitTemplate(connectionFactory: ConnectionFactory): RabbitTemplate = RabbitTemplate(connectionFactory)
 
     @Bean
-    fun commentLikeExchange(): TopicExchange {
-        return TopicExchange("${EXCHANGE_NAME}.comment.like")
-    }
+    fun commentRegisterExchange(): DirectExchange = DirectExchange("${EXCHANGE_NAME}.comment.register")
 
     @Bean
-    fun messageConverter(): MessageConverter {
-        return Jackson2JsonMessageConverter()
-    }
+    fun commentLikeExchange(): TopicExchange = TopicExchange("${EXCHANGE_NAME}.comment.like")
+
+    @Bean
+    fun messageConverter(): MessageConverter = Jackson2JsonMessageConverter()
 }

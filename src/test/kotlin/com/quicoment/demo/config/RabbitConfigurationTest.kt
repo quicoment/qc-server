@@ -15,30 +15,25 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class RabbitConfigurationTest {
     @Bean
-    fun connectionFactoryTest(): ConnectionFactory {
-        val connectionFactory = CachingConnectionFactory(
-            RabbitComponent.RABBITMQ_CONTAINER.host,
-            RabbitComponent.RABBITMQ_CONTAINER.amqpPort)
-        connectionFactory.username = RabbitComponent.RABBITMQ_CONTAINER.adminUsername
-        connectionFactory.setPassword(RabbitComponent.RABBITMQ_CONTAINER.adminPassword)
-        return connectionFactory
-    }
+    fun connectionFactoryTest(): ConnectionFactory = CachingConnectionFactory(
+        RabbitComponent.RABBITMQ_CONTAINER.host,
+        RabbitComponent.RABBITMQ_CONTAINER.amqpPort)
+        .apply {
+            username = RabbitComponent.RABBITMQ_CONTAINER.adminUsername
+            setPassword(RabbitComponent.RABBITMQ_CONTAINER.adminPassword)
+        }
 
     @Bean
-    fun rabbitAdminTest(connectionFactoryTest: ConnectionFactory): AmqpAdmin
-        = RabbitAdmin(connectionFactoryTest)
+    fun rabbitAdminTest(connectionFactoryTest: ConnectionFactory): AmqpAdmin = RabbitAdmin(connectionFactoryTest)
 
     @Bean
-    fun rabbitTemplateTest(connectionFactoryTest: ConnectionFactory): RabbitTemplate
-        = RabbitTemplate(connectionFactoryTest)
+    fun rabbitTemplateTest(connectionFactoryTest: ConnectionFactory): RabbitTemplate = RabbitTemplate(connectionFactoryTest)
 
     @Bean
-    fun commentRegisterExchangeTest(): DirectExchange =
-        DirectExchange("q.example.comment.register")
+    fun commentRegisterExchangeTest(): DirectExchange = DirectExchange("q.example.comment.register")
 
     @Bean
-    fun commentLikeExchangeTest(): DirectExchange =
-        DirectExchange("q.example.comment.register")
+    fun commentLikeExchangeTest(): DirectExchange = DirectExchange("q.example.comment.register")
 
     @Bean
     fun messageConverterTest(): MessageConverter = Jackson2JsonMessageConverter()
