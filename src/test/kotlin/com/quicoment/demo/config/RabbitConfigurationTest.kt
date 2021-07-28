@@ -2,6 +2,7 @@ package com.quicoment.demo.config
 
 import org.springframework.amqp.core.AmqpAdmin
 import org.springframework.amqp.core.DirectExchange
+import org.springframework.amqp.core.TopicExchange
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitAdmin
@@ -33,7 +34,7 @@ class RabbitConfigurationTest {
     fun commentRegisterExchangeTest(): DirectExchange = DirectExchange("q.example.comment.register")
 
     @Bean
-    fun commentLikeExchangeTest(): DirectExchange = DirectExchange("q.example.comment.register")
+    fun commentLikeExchangeTest(): TopicExchange = TopicExchange("q.example.comment.like")
 
     @Bean
     fun messageConverterTest(): MessageConverter = Jackson2JsonMessageConverter()
