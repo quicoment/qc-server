@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service
 
 
 @Service
-class CommentService(private val rabbitTemplate: AmqpTemplate,
+class CommentService(@Autowired private val rabbitTemplate: AmqpTemplate,
                      @Autowired private val commentRegisterExchange: TopicExchange,
                      @Autowired private val commentLikeExchange: TopicExchange) {
 
