@@ -47,7 +47,7 @@ class PostService(
     fun deletePost(id: Long) {
         postRepository.findById(id).orElseThrow { NoSuchResourceException(ErrorCase.NO_SUCH_POST.getMessage()) }
             .let { postRepository.delete(it) }
-        val queueName = mqService.deletePostQueue(id.toString())
-        listenerService.deleteQueueListener(queueName)
+        val queueDelete = mqService.deletePostQueue(id.toString())
+        listenerService.deleteQueueListener(queueDelete)
     }
 }
