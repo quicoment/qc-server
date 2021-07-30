@@ -1,5 +1,6 @@
 package com.quicoment.demo.service
 
+import com.quicoment.demo.dto.QueueDelete
 import com.quicoment.demo.dto.QueueRequest
 import org.springframework.amqp.core.*
 import org.springframework.beans.factory.annotation.Autowired
@@ -30,9 +31,9 @@ class MQService(
         return QueueRequest(queueName, registerExchangeName, likeExchangeName)
     }
 
-    fun deletePostQueue(id: String): String {
+    fun deletePostQueue(id: String): QueueDelete {
         val queueName = "${queueDomain}.post.${id}"
         rabbitAdmin.deleteQueue(queueName)
-        return queueName
+        return QueueDelete(queueName)
     }
 }
