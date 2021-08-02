@@ -6,7 +6,6 @@ import com.quicoment.demo.common.error.custom.NoSuchResourceException
 import com.quicoment.demo.domain.Post
 import com.quicoment.demo.dto.PostResponse
 import com.quicoment.demo.repository.PostRepository
-import org.springframework.amqp.core.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -15,13 +14,15 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional(readOnly = true)
 class PostService(
     @Autowired private val postRepository: PostRepository,
-    @Autowired private val mqService: MQService) {
+    @Autowired private val mqService: MQService,
+    @Autowired private val listenerService: ListenerService) {
 
     @Transactional
     fun savePost(post: Post): Long {
         val postId = postRepository.save(post).toResponseDto().id
             ?: throw FailCreateResourceException(ErrorCase.SAVE_POST_FAIL.getMessage())
-        mqService.declarePostQueue(postId.toString())
+        val queueRequest = mqService.declarePostQueue(postId.toString())
+        listenerService.newQueueListener(queueRequest)
         return postId
     }
 
@@ -46,6 +47,7 @@ class PostService(
     fun deletePost(id: Long) {
         postRepository.findById(id).orElseThrow { NoSuchResourceException(ErrorCase.NO_SUCH_POST.getMessage()) }
             .let { postRepository.delete(it) }
-        mqService.deletePostQueue(id.toString())
+        val queueDelete = mqService.deletePostQueue(id.toString())
+        listenerService.deleteQueueListener(queueDelete)
     }
 }

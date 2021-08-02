@@ -1,5 +1,7 @@
 package com.quicoment.demo.service
 
+import com.quicoment.demo.dto.QueueDelete
+import com.quicoment.demo.dto.QueueRequest
 import org.springframework.amqp.core.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -14,16 +16,24 @@ class MQService(
     @Autowired private val commentLikeExchange: TopicExchange,
     @Value("\${rabbitmq.queue-name-domain}") private val queueDomain: String) {
 
-    fun declarePostQueue(id: String) {
-        val newQueue = Queue("${queueDomain}.post.${id}")
+    fun declarePostQueue(id: String): QueueRequest {
+        val queueName = "${queueDomain}.post.${id}"
+        val newQueue = Queue(queueName)
         rabbitAdmin.declareQueue(newQueue)
+
+        val registerExchangeName = "post.${id}.comment"
         rabbitAdmin.declareBinding(
-            BindingBuilder.bind(newQueue).to(commentRegisterExchange).with("post.${id}.comment"))
+            BindingBuilder.bind(newQueue).to(commentRegisterExchange).with(registerExchangeName))
+
+        val likeExchangeName = "post.${id}.comment.#"
         rabbitAdmin.declareBinding(
-            BindingBuilder.bind(newQueue).to(commentLikeExchange).with("post.${id}.comment.#"))
+            BindingBuilder.bind(newQueue).to(commentLikeExchange).with(likeExchangeName))
+        return QueueRequest(queueName, registerExchangeName, likeExchangeName)
     }
 
-    fun deletePostQueue(id: String): Boolean {
-        return rabbitAdmin.deleteQueue("${queueDomain}.post.${id}")
+    fun deletePostQueue(id: String): QueueDelete {
+        val queueName = "${queueDomain}.post.${id}"
+        rabbitAdmin.deleteQueue(queueName)
+        return QueueDelete(queueName)
     }
 }
