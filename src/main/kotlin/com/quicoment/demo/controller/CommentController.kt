@@ -2,6 +2,8 @@ package com.quicoment.demo.controller
 
 import com.quicoment.demo.common.ResultOf
 import com.quicoment.demo.common.error.custom.InvalidFieldException
+import com.quicoment.demo.dto.CommentLikeRequest
+import com.quicoment.demo.dto.CommentRegisterRequest
 import com.quicoment.demo.dto.CommentRequest
 import com.quicoment.demo.service.CommentService
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,13 +22,13 @@ class CommentController(@Autowired val commentService: CommentService) {
         comment.content ?: throw InvalidFieldException()
         comment.password ?: throw InvalidFieldException()
 
-        commentService.registerComment(postId, comment)
+        commentService.registerComment(postId, CommentRegisterRequest(postId, comment.content, comment.password))
         return ResponseEntity.ok().build()
     }
 
     @GetMapping("/posts/{postId}/comments/{commentId}")
     fun likeComment(@PathVariable postId: Long, @PathVariable commentId: Long): ResponseEntity<ResultOf<*>> {
-        commentService.likeComment(postId, commentId)
+        commentService.likeComment(postId, CommentLikeRequest(commentId))
         return ResponseEntity.ok().build()
     }
 }
