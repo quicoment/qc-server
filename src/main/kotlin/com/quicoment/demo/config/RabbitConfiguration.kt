@@ -1,8 +1,6 @@
 package com.quicoment.demo.config
 
-import org.springframework.amqp.core.AmqpAdmin
-import org.springframework.amqp.core.DirectExchange
-import org.springframework.amqp.core.TopicExchange
+import org.springframework.amqp.core.*
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitAdmin
@@ -22,7 +20,8 @@ class RabbitConfiguration(
     @Value("\${rabbitmq.port}") private val RABBITMQ_PORT: String,
     @Value("\${rabbitmq.username}") private val USERNAME: String,
     @Value("\${rabbitmq.password}") private val PASSWORD: String,
-    @Value("\${rabbitmq.exchange-name-domain}") private val EXCHANGE_NAME: String,
+    @Value("\${rabbitmq.queue-name}") private val QUEUE_NAME: String,
+    @Value("\${rabbitmq.exchange-name}") private val EXCHANGE_NAME: String,
 ) {
 
     @Bean
@@ -36,14 +35,33 @@ class RabbitConfiguration(
     fun rabbitAdmin(connectionFactory: ConnectionFactory): AmqpAdmin = RabbitAdmin(connectionFactory)
 
     @Bean
-    fun rabbitTemplate(connectionFactory: ConnectionFactory): RabbitTemplate = RabbitTemplate(connectionFactory)
-
-    @Bean
-    fun commentRegisterExchange(): DirectExchange = DirectExchange("${EXCHANGE_NAME}.comment.register")
-
-    @Bean
-    fun commentLikeExchange(): TopicExchange = TopicExchange("${EXCHANGE_NAME}.comment.like")
-
-    @Bean
     fun messageConverter(): MessageConverter = Jackson2JsonMessageConverter()
+
+    @Bean
+    fun rabbitTemplate(connectionFactory: ConnectionFactory, messageConverter: MessageConverter): RabbitTemplate =
+        RabbitTemplate(connectionFactory).apply { setMessageConverter(messageConverter) }
+
+    @Bean
+    fun commentRegisterQueue(): Queue = Queue("${QUEUE_NAME}.comment.register")
+
+    @Bean
+    fun commentLikeQueue(): Queue = Queue("${QUEUE_NAME}.comment.like")
+
+    @Bean
+    fun commentUpdateQueue(): Queue = Queue("${QUEUE_NAME}.comment.update")
+
+    @Bean
+    fun commentExchange(): DirectExchange = DirectExchange("${EXCHANGE_NAME}.comment")
+
+    @Bean
+    fun commentRegisterBinding(commentRegisterQueue: Queue, commentExchange: DirectExchange): Binding =
+        BindingBuilder.bind(commentRegisterQueue).to(commentExchange).with("register")
+
+    @Bean
+    fun commentLikeBinding(commentLikeQueue: Queue, commentExchange: DirectExchange): Binding =
+        BindingBuilder.bind(commentLikeQueue).to(commentExchange).with("like")
+
+    @Bean
+    fun commentUpdateBinding(commentUpdateQueue: Queue, commentExchange: DirectExchange): Binding =
+        BindingBuilder.bind(commentUpdateQueue).to(commentExchange).with("update")
 }

@@ -1,8 +1,6 @@
 package com.quicoment.demo.config
 
-import org.springframework.amqp.core.AmqpAdmin
-import org.springframework.amqp.core.DirectExchange
-import org.springframework.amqp.core.TopicExchange
+import org.springframework.amqp.core.*
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitAdmin
@@ -28,14 +26,19 @@ class RabbitConfigurationTest {
     fun rabbitAdminTest(connectionFactoryTest: ConnectionFactory): AmqpAdmin = RabbitAdmin(connectionFactoryTest)
 
     @Bean
-    fun rabbitTemplateTest(connectionFactoryTest: ConnectionFactory): RabbitTemplate = RabbitTemplate(connectionFactoryTest)
-
-    @Bean
-    fun commentRegisterExchangeTest(): DirectExchange = DirectExchange("q.example.comment.register")
-
-    @Bean
-    fun commentLikeExchangeTest(): TopicExchange = TopicExchange("q.example.comment.like")
-
-    @Bean
     fun messageConverterTest(): MessageConverter = Jackson2JsonMessageConverter()
+
+    @Bean
+    fun rabbitTemplateTest(connectionFactoryTest: ConnectionFactory, messageConverterTest: MessageConverter): RabbitTemplate =
+        RabbitTemplate(connectionFactoryTest).apply{ messageConverter = messageConverterTest }
+
+    @Bean
+    fun defaultQueueTest(): Queue = Queue("q.example.default")
+
+    @Bean
+    fun defaultExchangeTest(): DirectExchange = DirectExchange("e.example.default")
+
+    @Bean
+    fun defaultBindingTest(defaultQueueTest: Queue, defaultExchangeTest: DirectExchange): Binding =
+        BindingBuilder.bind(defaultQueueTest).to(defaultExchangeTest).with("defaultKey")
 }
