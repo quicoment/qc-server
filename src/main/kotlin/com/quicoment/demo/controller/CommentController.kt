@@ -20,13 +20,13 @@ class CommentController(@Autowired val commentService: CommentService) {
         commentRegister.password ?: throw InvalidFieldException()
 
         commentService.registerComment(commentRegister.toRegisterDto(postId))
-        return ResponseEntity.noContent().build()
+        return ResponseEntity.accepted().build()
     }
 
     @PatchMapping("/comments/{commentId}/like")
     fun likeComment(@PathVariable commentId: String): ResponseEntity<ResultOf<*>> {
         commentService.likeComment(CommentLike(commentId))
-        return ResponseEntity.noContent().build()
+        return ResponseEntity.accepted().build()
     }
 
     @PutMapping("/comments/{commentId}")
@@ -37,6 +37,6 @@ class CommentController(@Autowired val commentService: CommentService) {
         // certificate password logic
 
         commentService.updateComment(newComment.toUpdateDto(commentId))
-        return ResponseEntity.noContent().build()
+        return ResponseEntity.accepted().build()
     }
 }
