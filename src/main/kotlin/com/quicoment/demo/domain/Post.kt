@@ -1,6 +1,6 @@
 package com.quicoment.demo.domain
 
-import com.quicoment.demo.dto.PostResponse
+import com.quicoment.demo.dto.post.PostResponse
 import javax.persistence.*
 
 @Entity

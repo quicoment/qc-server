@@ -4,7 +4,7 @@ import com.quicoment.demo.common.error.ErrorCase
 import com.quicoment.demo.common.error.custom.FailCreateResourceException
 import com.quicoment.demo.common.error.custom.NoSuchResourceException
 import com.quicoment.demo.domain.Post
-import com.quicoment.demo.dto.PostResponse
+import com.quicoment.demo.dto.post.PostResponse
 import com.quicoment.demo.repository.PostRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service

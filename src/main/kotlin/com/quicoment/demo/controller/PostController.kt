@@ -3,7 +3,7 @@ package com.quicoment.demo.controller
 import com.quicoment.demo.common.ResultOf
 import com.quicoment.demo.common.error.custom.InvalidFieldException
 import com.quicoment.demo.domain.Post
-import com.quicoment.demo.dto.PostRequest
+import com.quicoment.demo.dto.post.PostRequest
 import com.quicoment.demo.service.PostService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
