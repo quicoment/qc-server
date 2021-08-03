@@ -35,13 +35,20 @@ class RabbitConfiguration(
     fun rabbitAdmin(connectionFactory: ConnectionFactory): AmqpAdmin = RabbitAdmin(connectionFactory)
 
     @Bean
-    fun rabbitTemplate(connectionFactory: ConnectionFactory): RabbitTemplate = RabbitTemplate(connectionFactory)
+    fun messageConverter(): MessageConverter = Jackson2JsonMessageConverter()
+
+    @Bean
+    fun rabbitTemplate(connectionFactory: ConnectionFactory, messageConverter: MessageConverter): RabbitTemplate =
+        RabbitTemplate(connectionFactory).apply { setMessageConverter(messageConverter) }
 
     @Bean
     fun commentRegisterQueue(): Queue = Queue("${QUEUE_NAME}.comment.register")
 
     @Bean
     fun commentLikeQueue(): Queue = Queue("${QUEUE_NAME}.comment.like")
+
+    @Bean
+    fun commentUpdateQueue(): Queue = Queue("${QUEUE_NAME}.comment.update")
 
     @Bean
     fun commentExchange(): DirectExchange = DirectExchange("${EXCHANGE_NAME}.comment")
@@ -55,5 +62,6 @@ class RabbitConfiguration(
         BindingBuilder.bind(commentLikeQueue).to(commentExchange).with("like")
 
     @Bean
-    fun messageConverter(): MessageConverter = Jackson2JsonMessageConverter()
+    fun commentUpdateBinding(commentUpdateQueue: Queue, commentExchange: DirectExchange): Binding =
+        BindingBuilder.bind(commentUpdateQueue).to(commentExchange).with("update")
 }
