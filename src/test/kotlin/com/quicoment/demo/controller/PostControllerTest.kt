@@ -8,7 +8,6 @@ import com.quicoment.demo.domain.Post
 import com.quicoment.demo.dto.post.PostRequest
 import com.quicoment.demo.dto.post.PostResponse
 import com.quicoment.demo.service.PostService
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -25,15 +24,11 @@ import org.springframework.test.web.servlet.*
 
 @ExtendWith(SpringExtension::class)
 @WebMvcTest(PostController::class)
-class PostControllerTest(@Autowired val mockMvc: MockMvc) {
+internal class PostControllerTest(@Autowired val mockMvc: MockMvc) {
     @MockBean
     private lateinit var postService: PostService
 
     private val mapper = jacksonObjectMapper()
-
-    @BeforeEach
-    fun setUp() {
-    }
 
     @Test
     fun savePostTestSuccess() {
