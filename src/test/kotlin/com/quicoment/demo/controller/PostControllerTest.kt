@@ -5,8 +5,8 @@ import com.quicoment.demo.common.error.ErrorCase
 import com.quicoment.demo.common.error.custom.FailCreateResourceException
 import com.quicoment.demo.common.error.custom.NoSuchResourceException
 import com.quicoment.demo.domain.Post
-import com.quicoment.demo.dto.PostRequest
-import com.quicoment.demo.dto.PostResponse
+import com.quicoment.demo.dto.post.PostRequest
+import com.quicoment.demo.dto.post.PostResponse
 import com.quicoment.demo.service.PostService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.BDDMockito.doNothing
 import org.mockito.BDDMockito.given
-import org.springframework.amqp.AmqpException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
@@ -128,30 +127,11 @@ class PostControllerTest(@Autowired val mockMvc: MockMvc) {
         }
     }
 
-    @DisplayName("amqp exception")
-    @Test
-    fun savePostTestFail4() {
-        val postRequest = PostRequest("title-example", "content-example", "password-example")
-        val postEntity = Post("title-example", "content-example", "password-example")
-
-        given(postService.savePost(postEntity)).willThrow(AmqpException("amqp fail"))
-
-        mockMvc.post("/posts") {
-            contentType = APPLICATION_JSON
-            content = mapper.writeValueAsString(postRequest)
-            accept = APPLICATION_JSON
-        }.andExpect {
-            status { isInternalServerError() }
-            jsonPath("\$.code") { value(HttpStatus.INTERNAL_SERVER_ERROR.value()) }
-            jsonPath("\$.message") { value(ErrorCase.CONNECTION_FAIL.getMessage()) }
-        }
-    }
-
     @Test
     fun findAllPostsTestSuccess() {
         val posts = listOf(
-                PostResponse(1, "title-example-1", "content-example-1", "password-example-1"),
-                PostResponse(2, "title-example-2", "content-example-2", "password-example-2")
+            PostResponse(1, "title-example-1", "content-example-1", "password-example-1"),
+            PostResponse(2, "title-example-2", "content-example-2", "password-example-2")
         )
 
         given(postService.findAllPosts()).willReturn(posts)
@@ -286,7 +266,7 @@ class PostControllerTest(@Autowired val mockMvc: MockMvc) {
     fun updatePostFail2() {
         val postRequest = PostRequest("new-title", "new-content", "new-password")
         given(postService.updatePost(1, "new-title", "new-content", "new-password"))
-                .willThrow(NoSuchResourceException(ErrorCase.NO_SUCH_POST.getMessage()))
+            .willThrow(NoSuchResourceException(ErrorCase.NO_SUCH_POST.getMessage()))
 
         mockMvc.put("/posts/1") {
             contentType = APPLICATION_JSON
@@ -304,7 +284,7 @@ class PostControllerTest(@Autowired val mockMvc: MockMvc) {
     fun updatePostFail3() {
         val postRequest = PostRequest("new-title", "new-content", "new-password")
         given(postService.updatePost(1, "new-title", "new-content", "new-password"))
-                .willThrow(IllegalArgumentException("The given id must not be null!"))
+            .willThrow(IllegalArgumentException("The given id must not be null!"))
 
         mockMvc.put("/posts/1") {
             contentType = APPLICATION_JSON

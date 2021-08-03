@@ -17,12 +17,10 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
-import org.springframework.amqp.AmqpException
 import java.util.*
 
 @ExtendWith(MockitoExtension::class)
 class PostServiceTest {
-    private val mockMQService: MQService = mock()
     private val post = Post(1, "title", "content", "password")
 
     @Test
@@ -30,10 +28,9 @@ class PostServiceTest {
         // given
         val noIdPost = Post("title", "content", "password")
         val postRepository: PostRepository = mock { on { save(noIdPost) } doReturn post }
-        doNothing().`when`(mockMQService).declarePostQueue("1")
 
         // when
-        val postService = PostService(postRepository, mockMQService)
+        val postService = PostService(postRepository)
         val result = postService.savePost(noIdPost)
 
         // then
@@ -49,7 +46,7 @@ class PostServiceTest {
         val postRepository: PostRepository = mock { on { save(noIdPost) } doReturn noIdPost }
 
         // when
-        val postService = PostService(postRepository, mockMQService)
+        val postService = PostService(postRepository)
 
         // then
         val exception = assertThrows(FailCreateResourceException::class.java) {
@@ -60,33 +57,13 @@ class PostServiceTest {
     }
 
     @Test
-    @DisplayName("save post fail - fail declare queue or fail declare binding")
-    fun savePostTestFail2() {
-        // given
-        val noIdPost = Post("title", "content", "password")
-        val postRepository: PostRepository = mock { on { save(noIdPost) } doReturn post }
-        doThrow(AmqpException("fail declare queue")).`when`(mockMQService).declarePostQueue("1")
-
-        // when
-        val postService = PostService(postRepository, mockMQService)
-
-        // then
-        val exception = assertThrows(AmqpException::class.java) {
-            postService.savePost(noIdPost)
-        }
-        assertEquals(exception.message, "fail declare queue")
-        Mockito.verify(postRepository).save(noIdPost)
-    }
-
-
-    @Test
     fun findAllPostsTestSuccess1() {
         // given
         val posts = listOf(Post("title1", "content1", "password1"), Post("title2", "content2", "password2"))
         val postRepository: PostRepository = mock { on { findAll() } doReturn posts }
 
         // when
-        val postService = PostService(postRepository, mockMQService)
+        val postService = PostService(postRepository)
         val result = postService.findAllPosts()
 
         // then
@@ -102,7 +79,7 @@ class PostServiceTest {
         val postRepository: PostRepository = mock { on { findAll() } doReturn emptyList<Post>() }
 
         // when
-        val postService = PostService(postRepository, mockMQService)
+        val postService = PostService(postRepository)
         val result = postService.findAllPosts()
 
         // then
@@ -116,7 +93,7 @@ class PostServiceTest {
         val postRepository: PostRepository = mock { on { findById(1) } doReturn Optional.of(post) }
 
         // when
-        val postService = PostService(postRepository, mockMQService)
+        val postService = PostService(postRepository)
         val result = postService.findPostById(1)
 
         // then
@@ -133,13 +110,11 @@ class PostServiceTest {
     fun findPostByIdTestFail1() {
         // given
         val postRepository: PostRepository = mock {
-            on {
-                findById(100)
-            } doReturn Optional.empty()
+            on { findById(100) } doReturn Optional.empty()
         }
 
         // when
-        val postService = PostService(postRepository, mockMQService)
+        val postService = PostService(postRepository)
 
         // then
         val exception = assertThrows(NoSuchResourceException::class.java) {
@@ -154,13 +129,11 @@ class PostServiceTest {
     fun findPostByIdTestFail2() {
         // given
         val postRepository: PostRepository = mock {
-            on {
-                findById(anyLong())
-            } doThrow IllegalArgumentException("post id must not be null")
+            on { findById(anyLong()) } doThrow IllegalArgumentException("post id must not be null")
         }
 
         // when
-        val postService = PostService(postRepository, mockMQService)
+        val postService = PostService(postRepository)
 
         // then
         val exception = assertThrows(IllegalArgumentException::class.java) {
@@ -176,7 +149,7 @@ class PostServiceTest {
         val postRepository: PostRepository = mock { on { findById(1) } doReturn Optional.of(post) }
 
         // when
-        val postService = PostService(postRepository, mockMQService)
+        val postService = PostService(postRepository)
         postService.updatePost(1, "new_title", "new_content", "new_password")
 
         // then
@@ -195,7 +168,7 @@ class PostServiceTest {
         }
 
         // when
-        val postService = PostService(postRepository, mockMQService)
+        val postService = PostService(postRepository)
 
         // then
         val exception = assertThrows(NoSuchResourceException::class.java) {
@@ -206,31 +179,13 @@ class PostServiceTest {
     }
 
     @Test
-    fun deletePostTestSuccess1() {
+    fun deletePostTestSuccess() {
         // given
         val postRepository: PostRepository = mock { on { findById(1) } doReturn Optional.of(post) }
         doNothing().`when`(postRepository).delete(post)
-        doReturn(true).`when`(mockMQService).deletePostQueue("1")
 
         // when
-        val postService = PostService(postRepository, mockMQService)
-        postService.deletePost(1)
-
-        // then
-        Mockito.verify(postRepository).findById(1)
-        Mockito.verify(postRepository).delete(post)
-    }
-
-    @Test
-    @DisplayName("delete post success - no such queue")
-    fun deletePostTestSuccess2() {
-        // given
-        val postRepository: PostRepository = mock { on { findById(1) } doReturn Optional.of(post) }
-        doNothing().`when`(postRepository).delete(post)
-        doReturn(false).`when`(mockMQService).deletePostQueue("1")
-
-        // when
-        val postService = PostService(postRepository, mockMQService)
+        val postService = PostService(postRepository)
         postService.deletePost(1)
 
         // then
@@ -245,7 +200,7 @@ class PostServiceTest {
         val postRepository: PostRepository = mock { on { findById(1) } doReturn Optional.empty() }
 
         // when
-        val postService = PostService(postRepository, mockMQService)
+        val postService = PostService(postRepository)
 
         // then
         val exception = assertThrows(NoSuchResourceException::class.java) {
