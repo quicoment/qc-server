@@ -27,10 +27,11 @@ internal class CommentControllerTest(@Autowired val mockMvc: MockMvc) {
     private lateinit var commentService: CommentService
 
     private val mapper = jacksonObjectMapper()
+    private val postId: Long = 1
+    private val commentId = "qu1c0m3n-t777-1886-2021-qu1c0m3t1886"
 
     @Test
     fun registerCommentTestSuccess() {
-        val postId: Long = 1
         val commentRequest = CommentRegisterRequest(content = "content", password = "password")
 
         doNothing().`when`(commentService).registerComment(commentRequest.toRegisterDto(postId))
@@ -47,7 +48,6 @@ internal class CommentControllerTest(@Autowired val mockMvc: MockMvc) {
     @DisplayName("필수 필드 누락")
     @Test
     fun registerCommentTestFail1() {
-        val postId: Long = 1
         val commentRequest1 = CommentRegisterRequest(content = null, password = "password")
         val commentRequest2 = CommentRegisterRequest(content = "content", password = null)
 
@@ -75,7 +75,6 @@ internal class CommentControllerTest(@Autowired val mockMvc: MockMvc) {
     @DisplayName("convertAndSend exception")
     @Test
     fun registerCommentTestFail2() {
-        val postId: Long = 1
         val commentRequest = CommentRegisterRequest(content = "content", password = "password")
 
         given(commentService.registerComment(commentRequest.toRegisterDto(postId)))
@@ -94,12 +93,11 @@ internal class CommentControllerTest(@Autowired val mockMvc: MockMvc) {
 
     @Test
     fun likeCommentTestSuccess() {
-        val commentId = "qu1c0m3n-t777-1886-2021-qu1c0m3t1886"
-        val commentLike = CommentLike(commentId)
+        val commentLike = CommentLike(postId, commentId)
 
         doNothing().`when`(commentService).likeComment(commentLike)
 
-        mockMvc.patch("/comments/${commentId}/like") {
+        mockMvc.patch("/posts/${postId}/comments/${commentId}/like") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
         }.andExpect {
@@ -110,12 +108,11 @@ internal class CommentControllerTest(@Autowired val mockMvc: MockMvc) {
     @DisplayName("convertAndSend exception")
     @Test
     fun likeCommentTestFail() {
-        val commentId = "qu1c0m3n-t777-1886-2021-qu1c0m3t1886"
-        val commentLike = CommentLike(commentId)
+        val commentLike = CommentLike(postId, commentId)
 
         given(commentService.likeComment(commentLike)).willThrow(AmqpException("there is a problem"))
 
-        mockMvc.patch("/comments/${commentId}/like") {
+        mockMvc.patch("/posts/${postId}/comments/${commentId}/like") {
             contentType = MediaType.APPLICATION_JSON
             accept = MediaType.APPLICATION_JSON
         }.andExpect {
@@ -127,12 +124,11 @@ internal class CommentControllerTest(@Autowired val mockMvc: MockMvc) {
 
     @Test
     fun updateCommentTestSuccess() {
-        val commentId = "qu1c0m3n-t777-1886-2021-qu1c0m3t1886"
         val newComment = CommentUpdateRequest(password = "password", content = "content")
 
-        doNothing().`when`(commentService).updateComment(newComment.toUpdateDto(commentId))
+        doNothing().`when`(commentService).updateComment(newComment.toUpdateDto(postId, commentId))
 
-        mockMvc.put("/comments/${commentId}") {
+        mockMvc.put("/posts/${postId}/comments/${commentId}") {
             contentType = MediaType.APPLICATION_JSON
             content = mapper.writeValueAsString(newComment)
             accept = MediaType.APPLICATION_JSON
@@ -144,11 +140,10 @@ internal class CommentControllerTest(@Autowired val mockMvc: MockMvc) {
     @DisplayName("필수 필드 누락")
     @Test
     fun updateCommentTestFail1() {
-        val commentId = "qu1c0m3n-t777-1886-2021-qu1c0m3t1886"
         val newComment1 = CommentUpdateRequest(password = null, content = "content")
         val newComment2 = CommentUpdateRequest(password = "password", content = null)
 
-        mockMvc.put("/comments/${commentId}") {
+        mockMvc.put("/posts/${postId}/comments/${commentId}") {
             contentType = MediaType.APPLICATION_JSON
             content = mapper.writeValueAsString(newComment1)
             accept = MediaType.APPLICATION_JSON
@@ -158,7 +153,7 @@ internal class CommentControllerTest(@Autowired val mockMvc: MockMvc) {
             jsonPath("\$.message") { value(ErrorCase.INVALID_FIELD.getMessage()) }
         }
 
-        mockMvc.put("/comments/${commentId}") {
+        mockMvc.put("/posts/${postId}/comments/${commentId}") {
             contentType = MediaType.APPLICATION_JSON
             content = mapper.writeValueAsString(newComment2)
             accept = MediaType.APPLICATION_JSON
@@ -172,13 +167,12 @@ internal class CommentControllerTest(@Autowired val mockMvc: MockMvc) {
     @DisplayName("convertAndSend exception")
     @Test
     fun updateCommentTestFail2() {
-        val commentId = "qu1c0m3n-t777-1886-2021-qu1c0m3t1886"
         val newComment = CommentUpdateRequest(password = "password", content = "content")
 
-        given(commentService.updateComment(newComment.toUpdateDto(commentId)))
+        given(commentService.updateComment(newComment.toUpdateDto(postId, commentId)))
             .willThrow(AmqpException("there is a problem"))
 
-        mockMvc.put("/comments/${commentId}") {
+        mockMvc.put("/posts/${postId}/comments/${commentId}") {
             contentType = MediaType.APPLICATION_JSON
             content = mapper.writeValueAsString(newComment)
             accept = MediaType.APPLICATION_JSON
