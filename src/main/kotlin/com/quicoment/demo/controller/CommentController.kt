@@ -23,20 +23,21 @@ class CommentController(@Autowired val commentService: CommentService) {
         return ResponseEntity.accepted().build()
     }
 
-    @PatchMapping("/comments/{commentId}/like")
-    fun likeComment(@PathVariable commentId: String): ResponseEntity<ResultOf<*>> {
-        commentService.likeComment(CommentLike(commentId))
+    @PatchMapping("/posts/{postId}/comments/{commentId}/like")
+    fun likeComment(@PathVariable postId: Long, @PathVariable commentId: String): ResponseEntity<ResultOf<*>> {
+        commentService.likeComment(CommentLike(postId, commentId))
         return ResponseEntity.accepted().build()
     }
 
-    @PutMapping("/comments/{commentId}")
-    fun updateComment(@PathVariable commentId: String, @RequestBody newComment: CommentUpdateRequest): ResponseEntity<ResultOf<*>> {
+    @PutMapping("/posts/{postId}/comments/{commentId}")
+    fun updateComment(@PathVariable postId: Long, @PathVariable commentId: String,
+                      @RequestBody newComment: CommentUpdateRequest): ResponseEntity<ResultOf<*>> {
         newComment.password ?: throw InvalidFieldException()
         newComment.content ?: throw InvalidFieldException()
 
         // certificate password logic
 
-        commentService.updateComment(newComment.toUpdateDto(commentId))
+        commentService.updateComment(newComment.toUpdateDto(postId, commentId))
         return ResponseEntity.accepted().build()
     }
 }
