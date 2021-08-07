@@ -65,7 +65,7 @@ internal class CommentServiceTest {
     @Test
     fun likeCommentTestSuccess() {
         // given
-        val commentLike = CommentLike(postId, commentId)
+        val commentLike = CommentLike(postId, commentId, "user-id")
 
         val mockRabbitTemplate: AmqpTemplate = mock()
         doNothing().`when`(mockRabbitTemplate).convertAndSend("e.mock", "like", commentLike)
@@ -82,7 +82,7 @@ internal class CommentServiceTest {
     @DisplayName("convertAndSend fail - there is a problem")
     fun likeCommentTestFail() {
         // given
-        val commentLike = CommentLike(postId, commentId)
+        val commentLike = CommentLike(postId, commentId, "user-id")
 
         val mockRabbitTemplate: AmqpTemplate = mock {
             on { convertAndSend(mockCommentExchange.name, "like", commentLike)

@@ -45,7 +45,7 @@ internal class CommentControllerTest(@Autowired val mockMvc: MockMvc) {
         }
     }
 
-    @DisplayName("필수 필드 누락")
+    @DisplayName("register comment - 필수 필드 누락")
     @Test
     fun registerCommentTestFail1() {
         val commentRequest1 = CommentRegisterRequest(content = null, password = "password")
@@ -72,7 +72,7 @@ internal class CommentControllerTest(@Autowired val mockMvc: MockMvc) {
         }
     }
 
-    @DisplayName("convertAndSend exception")
+    @DisplayName("register comment - convertAndSend exception")
     @Test
     fun registerCommentTestFail2() {
         val commentRequest = CommentRegisterRequest(content = "content", password = "password")
@@ -93,27 +93,45 @@ internal class CommentControllerTest(@Autowired val mockMvc: MockMvc) {
 
     @Test
     fun likeCommentTestSuccess() {
-        val commentLike = CommentLike(postId, commentId)
+        val commentLikeRequest = CommentLike(postId, commentId, "user-id")
 
-        doNothing().`when`(commentService).likeComment(commentLike)
+        doNothing().`when`(commentService).likeComment(commentLikeRequest)
 
         mockMvc.patch("/posts/${postId}/comments/${commentId}/like") {
             contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(commentLikeRequest)
             accept = MediaType.APPLICATION_JSON
         }.andExpect {
             status { isAccepted() }
         }
     }
 
-    @DisplayName("convertAndSend exception")
+    @DisplayName("like comment - 필수 필드 누락")
     @Test
-    fun likeCommentTestFail() {
-        val commentLike = CommentLike(postId, commentId)
-
-        given(commentService.likeComment(commentLike)).willThrow(AmqpException("there is a problem"))
+    fun likeCommentTestFail1() {
+        val commentLikeRequest = CommentLike(postId, commentId, null)
 
         mockMvc.patch("/posts/${postId}/comments/${commentId}/like") {
             contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(commentLikeRequest)
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("\$.code") { value(ErrorCase.INVALID_FIELD.getCode()) }
+            jsonPath("\$.message") { value(ErrorCase.INVALID_FIELD.getMessage()) }
+        }
+    }
+
+    @DisplayName("like comment - convertAndSend exception")
+    @Test
+    fun likeCommentTestFail2() {
+        val commentLikeRequest = CommentLike(postId, commentId, "user-id")
+
+        given(commentService.likeComment(commentLikeRequest)).willThrow(AmqpException("there is a problem"))
+
+        mockMvc.patch("/posts/${postId}/comments/${commentId}/like") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(commentLikeRequest)
             accept = MediaType.APPLICATION_JSON
         }.andExpect {
             status { isInternalServerError() }
@@ -137,7 +155,7 @@ internal class CommentControllerTest(@Autowired val mockMvc: MockMvc) {
         }
     }
 
-    @DisplayName("필수 필드 누락")
+    @DisplayName("update comment - 필수 필드 누락")
     @Test
     fun updateCommentTestFail1() {
         val newComment1 = CommentUpdateRequest(password = null, content = "content")
@@ -164,7 +182,7 @@ internal class CommentControllerTest(@Autowired val mockMvc: MockMvc) {
         }
     }
 
-    @DisplayName("convertAndSend exception")
+    @DisplayName("update comment - convertAndSend exception")
     @Test
     fun updateCommentTestFail2() {
         val newComment = CommentUpdateRequest(password = "password", content = "content")
