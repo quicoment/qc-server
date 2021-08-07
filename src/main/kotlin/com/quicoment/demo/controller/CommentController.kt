@@ -3,6 +3,7 @@ package com.quicoment.demo.controller
 import com.quicoment.demo.common.ResultOf
 import com.quicoment.demo.common.error.custom.InvalidFieldException
 import com.quicoment.demo.dto.comment.CommentLike
+import com.quicoment.demo.dto.comment.CommentLikeRequest
 import com.quicoment.demo.dto.comment.CommentRegisterRequest
 import com.quicoment.demo.dto.comment.CommentUpdateRequest
 import com.quicoment.demo.service.CommentService
@@ -24,8 +25,8 @@ class CommentController(@Autowired val commentService: CommentService) {
     }
 
     @PatchMapping("/posts/{postId}/comments/{commentId}/like")
-    fun likeComment(@PathVariable postId: Long, @PathVariable commentId: String): ResponseEntity<ResultOf<*>> {
-        commentService.likeComment(CommentLike(postId, commentId))
+    fun likeComment(@PathVariable postId: Long, @PathVariable commentId: String, @RequestBody commentLikeRequest: CommentLikeRequest): ResponseEntity<ResultOf<*>> {
+        commentService.likeComment(commentLikeRequest.toLikeDto(postId, commentId))
         return ResponseEntity.accepted().build()
     }
 
