@@ -25,8 +25,10 @@ class CommentController(@Autowired val commentService: CommentService) {
     }
 
     @PatchMapping("/posts/{postId}/comments/{commentId}/like")
-    fun likeComment(@PathVariable postId: Long, @PathVariable commentId: String, @RequestBody commentLikeRequest: CommentLikeRequest): ResponseEntity<ResultOf<*>> {
-        commentService.likeComment(commentLikeRequest.toLikeDto(postId, commentId))
+    fun likeComment(@PathVariable postId: Long, @PathVariable commentId: String, @RequestBody commentLike: CommentLikeRequest): ResponseEntity<ResultOf<*>> {
+        commentLike.userId ?: throw InvalidFieldException()
+
+        commentService.likeComment(commentLike.toLikeDto(postId, commentId))
         return ResponseEntity.accepted().build()
     }
 
