@@ -6,6 +6,7 @@ plugins {
     kotlin("jvm") version "1.5.20"
     kotlin("plugin.spring") version "1.5.20"
     kotlin("plugin.jpa") version "1.5.20"
+    jacoco
 }
 
 allOpen {
@@ -24,6 +25,11 @@ configurations {
     compileOnly {
         extendsFrom(configurations.annotationProcessor.get())
     }
+}
+
+jacoco {
+    toolVersion = "0.8.7"
+    reportsDirectory.set(layout.buildDirectory.dir("customJacocoReportDir"))
 }
 
 repositories {
@@ -61,4 +67,47 @@ tasks.withType<KotlinCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.test {
+    useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(false)
+        csv.required.set(false)
+        html.outputLocation.set(layout.buildDirectory.dir("jacocoHtml"))
+    }
+}
+
+tasks.jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            enabled = true
+            element = "METHOD"
+            excludes = listOf("*.domain*", "*.error*")
+
+            limit {
+                counter = "BRANCH"
+                value = "COVEREDRATIO"
+                minimum = "0.9".toBigDecimal()
+            }
+        }
+
+        rule {
+            enabled = true
+            element = "CLASS"
+            excludes = listOf("*.dto*", "*.domain*", "*.config*", "*.common*", "*.util*", "*.demo.DemoApplicationKt*")
+
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = "0.8".toBigDecimal()
+            }
+
+        }
+    }
 }
