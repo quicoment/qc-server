@@ -81,3 +81,32 @@ tasks.jacocoTestReport {
         html.outputLocation.set(layout.buildDirectory.dir("jacocoHtml"))
     }
 }
+
+tasks.jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            enabled = true
+            element = "METHOD"
+            excludes = listOf("*.domain*", "*.error*")
+
+            limit{
+                counter = "BRANCH"
+                value = "COVEREDRATIO"
+                minimum = "0.8".toBigDecimal()
+            }
+        }
+
+        rule {
+            enabled = true
+            element = "CLASS"
+            excludes = listOf("*.dto*", "*.domain*", "*.config*", "*.common*", "*.util*", "*.demo.DemoApplicationKt*")
+
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = "0.6".toBigDecimal()
+            }
+
+        }
+    }
+}
