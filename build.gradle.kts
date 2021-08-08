@@ -70,6 +70,7 @@ tasks.withType<Test> {
 }
 
 tasks.test {
+    useJUnitPlatform()
     finalizedBy(tasks.jacocoTestReport)
 }
 
@@ -92,7 +93,7 @@ tasks.jacocoTestCoverageVerification {
             limit {
                 counter = "BRANCH"
                 value = "COVEREDRATIO"
-                minimum = "0.8".toBigDecimal()
+                minimum = "0.9".toBigDecimal()
             }
         }
 
@@ -104,7 +105,7 @@ tasks.jacocoTestCoverageVerification {
             limit {
                 counter = "LINE"
                 value = "COVEREDRATIO"
-                minimum = "0.6".toBigDecimal()
+                minimum = "0.8".toBigDecimal()
             }
 
         }
