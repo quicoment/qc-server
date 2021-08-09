@@ -15,7 +15,6 @@ import org.springframework.amqp.AmqpException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
-import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.servlet.*
@@ -86,8 +85,39 @@ internal class CommentControllerTest(@Autowired val mockMvc: MockMvc) {
             accept = MediaType.APPLICATION_JSON
         }.andExpect {
             status { isInternalServerError() }
-            jsonPath("\$.code") { value(HttpStatus.INTERNAL_SERVER_ERROR.value()) }
+            jsonPath("\$.code") { value(ErrorCase.CONNECTION_FAIL.getCode()) }
             jsonPath("\$.message") { value(ErrorCase.CONNECTION_FAIL.getMessage()) }
+        }
+    }
+
+    @DisplayName("잘못된 path variable type")
+    @Test
+    fun registerCommentTestFail3() {
+        val commentRequest = CommentRegisterRequest(content = "content", password = "password")
+
+        mockMvc.post("/posts/character/comments") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(commentRequest)
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("\$.code") { value(ErrorCase.INVALID_TYPE.getCode()) }
+            jsonPath("\$.message") { value(ErrorCase.INVALID_TYPE.getMessage()) }
+        }
+    }
+
+    @DisplayName("Invalid Content-Type header")
+    @Test
+    fun registerCommentTestFail4() {
+        val commentRequest = CommentRegisterRequest(content = "content", password = "password")
+
+        mockMvc.post("/posts/${postId}/comments") {
+            content = mapper.writeValueAsString(commentRequest)
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            status { isUnsupportedMediaType() }
+            jsonPath("\$.code") { value(ErrorCase.INVALID_HEADER.getCode()) }
+            jsonPath("\$.message") { value(ErrorCase.INVALID_HEADER.getMessage()) }
         }
     }
 
@@ -135,8 +165,39 @@ internal class CommentControllerTest(@Autowired val mockMvc: MockMvc) {
             accept = MediaType.APPLICATION_JSON
         }.andExpect {
             status { isInternalServerError() }
-            jsonPath("\$.code") { value(HttpStatus.INTERNAL_SERVER_ERROR.value()) }
+            jsonPath("\$.code") { value(ErrorCase.CONNECTION_FAIL.getCode()) }
             jsonPath("\$.message") { value(ErrorCase.CONNECTION_FAIL.getMessage()) }
+        }
+    }
+
+    @DisplayName("잘못된 path variable type")
+    @Test
+    fun likeCommentTestFail3() {
+        val commentLikeRequest = CommentLike(postId, commentId, "user-id")
+
+        mockMvc.patch("/posts/character/comments/${commentId}/like") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(commentLikeRequest)
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("\$.code") { value(ErrorCase.INVALID_TYPE.getCode()) }
+            jsonPath("\$.message") { value(ErrorCase.INVALID_TYPE.getMessage()) }
+        }
+    }
+
+    @DisplayName("Invalid Content-Type header")
+    @Test
+    fun likeCommentTestFail4() {
+        val commentLikeRequest = CommentLike(postId, commentId, "user-id")
+
+        mockMvc.patch("/posts/${postId}/comments/${commentId}/like") {
+            content = mapper.writeValueAsString(commentLikeRequest)
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            status { isUnsupportedMediaType() }
+            jsonPath("\$.code") { value(ErrorCase.INVALID_HEADER.getCode()) }
+            jsonPath("\$.message") { value(ErrorCase.INVALID_HEADER.getMessage()) }
         }
     }
 
@@ -196,8 +257,39 @@ internal class CommentControllerTest(@Autowired val mockMvc: MockMvc) {
             accept = MediaType.APPLICATION_JSON
         }.andExpect {
             status { isInternalServerError() }
-            jsonPath("\$.code") { value(HttpStatus.INTERNAL_SERVER_ERROR.value()) }
+            jsonPath("\$.code") { value(ErrorCase.CONNECTION_FAIL.getCode()) }
             jsonPath("\$.message") { value(ErrorCase.CONNECTION_FAIL.getMessage()) }
+        }
+    }
+
+    @DisplayName("잘못된 path variable type")
+    @Test
+    fun updateCommentTestFail3() {
+        val newComment = CommentUpdateRequest(password = "password", content = "content")
+
+        mockMvc.put("/posts/character/comments/${commentId}") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(newComment)
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("\$.code") { value(ErrorCase.INVALID_TYPE.getCode()) }
+            jsonPath("\$.message") { value(ErrorCase.INVALID_TYPE.getMessage()) }
+        }
+    }
+
+    @DisplayName("Invalid Content-Type header")
+    @Test
+    fun updateCommentTestFail4() {
+        val newComment = CommentUpdateRequest(password = "password", content = "content")
+
+        mockMvc.put("/posts/${postId}/comments/${commentId}") {
+            content = mapper.writeValueAsString(newComment)
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            status { isUnsupportedMediaType() }
+            jsonPath("\$.code") { value(ErrorCase.INVALID_HEADER.getCode()) }
+            jsonPath("\$.message") { value(ErrorCase.INVALID_HEADER.getMessage()) }
         }
     }
 }
