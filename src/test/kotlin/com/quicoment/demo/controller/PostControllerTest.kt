@@ -96,9 +96,10 @@ internal class PostControllerTest(@Autowired val mockMvc: MockMvc) {
         mockMvc.post("/posts") {
             contentType = APPLICATION_JSON
             content = mapper.writeValueAsString(postRequest)
+            accept = APPLICATION_JSON
         }.andExpect {
             status { isInternalServerError() }
-            jsonPath("\$.code") { value(HttpStatus.INTERNAL_SERVER_ERROR.value()) }
+            jsonPath("\$.code") { value(ErrorCase.SAVE_POST_FAIL.getCode()) }
             jsonPath("\$.message") { value(ErrorCase.SAVE_POST_FAIL.getMessage()) }
         }
     }
@@ -119,6 +120,20 @@ internal class PostControllerTest(@Autowired val mockMvc: MockMvc) {
             status { isInternalServerError() }
             jsonPath("\$.code") { value(HttpStatus.INTERNAL_SERVER_ERROR.value()) }
             jsonPath("\$.message") { value("fail save null entity") }
+        }
+    }
+
+    @DisplayName("Invalid Content-Type header")
+    @Test
+    fun savePostTestFail4() {
+        val postRequest = PostRequest("title-example", "content-example", "password-example")
+
+        mockMvc.post("/posts") {
+            content = mapper.writeValueAsString(postRequest)
+        }.andExpect {
+            status { isUnsupportedMediaType() }
+            jsonPath("\$.code") { value(ErrorCase.INVALID_HEADER.getCode()) }
+            jsonPath("\$.message") { value(ErrorCase.INVALID_HEADER.getMessage()) }
         }
     }
 
@@ -169,7 +184,7 @@ internal class PostControllerTest(@Autowired val mockMvc: MockMvc) {
             accept = APPLICATION_JSON
         }.andExpect {
             status { isBadRequest() }
-            jsonPath("\$.code") { value(HttpStatus.BAD_REQUEST.value()) }
+            jsonPath("\$.code") { value(ErrorCase.INVALID_TYPE.getCode()) }
             jsonPath("\$.message") { value(ErrorCase.INVALID_TYPE.getMessage()) }
         }
     }
@@ -184,7 +199,7 @@ internal class PostControllerTest(@Autowired val mockMvc: MockMvc) {
             accept = APPLICATION_JSON
         }.andExpect {
             status { isNotFound() }
-            jsonPath("\$.code") { value(HttpStatus.NOT_FOUND.value()) }
+            jsonPath("\$.code") { value(ErrorCase.NO_SUCH_POST.getCode()) }
             jsonPath("\$.message") { value(ErrorCase.NO_SUCH_POST.getMessage()) }
         }
     }
@@ -269,7 +284,7 @@ internal class PostControllerTest(@Autowired val mockMvc: MockMvc) {
             accept = APPLICATION_JSON
         }.andExpect {
             status { isNotFound() }
-            jsonPath("\$.code") { value(HttpStatus.NOT_FOUND.value()) }
+            jsonPath("\$.code") { value(ErrorCase.NO_SUCH_POST.getCode()) }
             jsonPath("\$.message") { value(ErrorCase.NO_SUCH_POST.getMessage()) }
         }
     }
@@ -289,6 +304,20 @@ internal class PostControllerTest(@Autowired val mockMvc: MockMvc) {
             status { isInternalServerError() }
             jsonPath("\$.code") { value(HttpStatus.INTERNAL_SERVER_ERROR.value()) }
             jsonPath("\$.message") { value("The given id must not be null!") }
+        }
+    }
+
+    @DisplayName("Invalid Content-Type header")
+    @Test
+    fun updatePostTestFail4() {
+        val postRequest = PostRequest("title-example", "content-example", "password-example")
+
+        mockMvc.put("/posts/1") {
+            content = mapper.writeValueAsString(postRequest)
+        }.andExpect {
+            status { isUnsupportedMediaType() }
+            jsonPath("\$.code") { value(ErrorCase.INVALID_HEADER.getCode()) }
+            jsonPath("\$.message") { value(ErrorCase.INVALID_HEADER.getMessage()) }
         }
     }
 
@@ -314,7 +343,7 @@ internal class PostControllerTest(@Autowired val mockMvc: MockMvc) {
             accept = APPLICATION_JSON
         }.andExpect {
             status { isNotFound() }
-            jsonPath("\$.code") { value(HttpStatus.NOT_FOUND.value()) }
+            jsonPath("\$.code") { value(ErrorCase.NO_SUCH_POST.getCode()) }
             jsonPath("\$.message") { value(ErrorCase.NO_SUCH_POST.getMessage()) }
         }
     }
@@ -331,6 +360,19 @@ internal class PostControllerTest(@Autowired val mockMvc: MockMvc) {
             status { isInternalServerError() }
             jsonPath("\$.code") { value(HttpStatus.INTERNAL_SERVER_ERROR.value()) }
             jsonPath("\$.message") { value("The given id must not be null!") }
+        }
+    }
+
+    @DisplayName("잘못된 path variable type")
+    @Test
+    fun deletePostFail3() {
+        mockMvc.delete("/posts/character") {
+            contentType = APPLICATION_JSON
+            accept = APPLICATION_JSON
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("\$.code") { value(ErrorCase.INVALID_TYPE.getCode()) }
+            jsonPath("\$.message") { value(ErrorCase.INVALID_TYPE.getMessage()) }
         }
     }
 }
