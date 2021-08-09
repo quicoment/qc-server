@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus
 
 enum class ErrorCase(private val code: Int, private val message: String) {
     INVALID_METHOD(HttpStatus.BAD_REQUEST.value(), "지원하지 않는 메소드입니다. "),
+    INVALID_HEADER(HttpStatus.BAD_REQUEST.value(), "잘못된 헤더입니다. "),
     INVALID_TYPE(HttpStatus.BAD_REQUEST.value(), "잘못된 타입입니다. "),
     INVALID_FORMAT(HttpStatus.BAD_REQUEST.value(), "잘못된 형식입니다. "),
     INVALID_FIELD(HttpStatus.BAD_REQUEST.value(), "필수항목을 입력해주세요. "),
