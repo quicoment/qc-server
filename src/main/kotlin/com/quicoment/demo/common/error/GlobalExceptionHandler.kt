@@ -24,25 +24,25 @@ class GlobalExceptionHandler {
     @ExceptionHandler
     fun handleInvalidHTTPMethod(e: HttpMediaTypeNotSupportedException): ResponseEntity<ResultOf.Error> {
         return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(
-            ResultOf.Error(HttpStatus.BAD_REQUEST.value(), ErrorCase.INVALID_HEADER.getMessage()))
+            ResultOf.Error(ErrorCase.INVALID_HEADER.getCode(), ErrorCase.INVALID_HEADER.getMessage()))
     }
 
     @ExceptionHandler
     fun handleInvalidHTTPMethod(e: HttpRequestMethodNotSupportedException): ResponseEntity<ResultOf.Error> {
         return ResponseEntity.badRequest().body(
-            ResultOf.Error(HttpStatus.BAD_REQUEST.value(), ErrorCase.INVALID_METHOD.getMessage()))
+            ResultOf.Error(ErrorCase.INVALID_METHOD.getCode(), ErrorCase.INVALID_METHOD.getMessage()))
     }
 
     @ExceptionHandler
     fun handleInvalidJSONFormat(e: HttpMessageNotReadableException): ResponseEntity<ResultOf.Error> {
         return ResponseEntity.badRequest().body(
-            ResultOf.Error(HttpStatus.BAD_REQUEST.value(), ErrorCase.INVALID_FORMAT.getMessage()))
+            ResultOf.Error(ErrorCase.INVALID_FORMAT.getCode(), ErrorCase.INVALID_FORMAT.getMessage()))
     }
 
     @ExceptionHandler
     fun handleInvalidPostNumber(e: MethodArgumentTypeMismatchException): ResponseEntity<ResultOf.Error> {
         return ResponseEntity.badRequest().body(
-            ResultOf.Error(HttpStatus.BAD_REQUEST.value(), ErrorCase.INVALID_TYPE.getMessage()))
+            ResultOf.Error(ErrorCase.INVALID_TYPE.getCode(), ErrorCase.INVALID_TYPE.getMessage()))
     }
 
     @ExceptionHandler
@@ -60,19 +60,19 @@ class GlobalExceptionHandler {
     @ExceptionHandler
     fun handleInvalidField(e: InvalidFieldException): ResponseEntity<ResultOf.Error> {
         return ResponseEntity.badRequest().body(
-            ResultOf.Error(HttpStatus.BAD_REQUEST.value(), ErrorCase.INVALID_FIELD.getMessage()))
+            ResultOf.Error(ErrorCase.INVALID_FIELD.getCode(), ErrorCase.INVALID_FIELD.getMessage()))
     }
 
     @ExceptionHandler
     fun handleConnectionFail(e: HttpServerErrorException): ResponseEntity<ResultOf.Error> {
         return ResponseEntity.internalServerError().body(
-            ResultOf.Error(HttpStatus.INTERNAL_SERVER_ERROR.value(), ErrorCase.CONNECTION_FAIL.getMessage()))
+            ResultOf.Error(ErrorCase.CONNECTION_FAIL.getCode(), ErrorCase.CONNECTION_FAIL.getMessage()))
     }
 
     @ExceptionHandler
     fun handleAMQPFail(e: AmqpException): ResponseEntity<ResultOf.Error> {
         return ResponseEntity.internalServerError().body(
-            ResultOf.Error(HttpStatus.INTERNAL_SERVER_ERROR.value(), ErrorCase.CONNECTION_FAIL.getMessage()))
+            ResultOf.Error(ErrorCase.CONNECTION_FAIL.getCode(), ErrorCase.CONNECTION_FAIL.getMessage()))
     }
 
     @ExceptionHandler
